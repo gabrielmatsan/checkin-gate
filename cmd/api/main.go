@@ -72,10 +72,41 @@ func main() {
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 	})
 
-	// Swagger
+	// Swagger JSON (necessário para o Scalar)
 	router.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL("/swagger/doc.json"),
 	))
+
+	// Scalar - documentação moderna da API
+	router.Get("/docs", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<!DOCTYPE html>
+<html>
+<head>
+    <title>Checkin Gate API</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        body { margin: 0; padding: 0; }
+    </style>
+</head>
+<body>
+    <script id="api-reference" data-url="/swagger/doc.json" data-configuration='{
+        "theme": "purple",
+        "layout": "modern",
+        "darkMode": true,
+        "hideDarkModeToggle": false,
+        "searchHotKey": "k",
+        "metaData": {
+            "title": "Checkin Gate API",
+            "description": "API para sistema de check-in com autenticação OAuth Google"
+        },
+        "hideDownloadButton": false
+    }'></script>
+    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+</body>
+</html>`))
+	})
 
 	identity.RegisterRoutes(router, db.DB, cfg)
 
@@ -94,7 +125,7 @@ func main() {
 	fmt.Println("───────────────────────────────────────")
 	fmt.Printf("🌐 Base:    %s\n", baseURL)
 	fmt.Printf("❤️  Health:  %s/health\n", baseURL)
-	fmt.Printf("📚 Swagger: %s/swagger/index.html\n", baseURL)
+	fmt.Printf("📚 Docs:    %s/docs\n", baseURL)
 	fmt.Printf("🔑 Auth:    %s/auth\n", baseURL)
 	fmt.Println("───────────────────────────────────────")
 	fmt.Println("")
