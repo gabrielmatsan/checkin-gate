@@ -87,9 +87,20 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 	}
 
+	baseURL := fmt.Sprintf("http://localhost:%d", cfg.Port)
+
+	fmt.Println("")
+	fmt.Println("🚀 Checkin Gate API")
+	fmt.Println("───────────────────────────────────────")
+	fmt.Printf("🌐 Base:    %s\n", baseURL)
+	fmt.Printf("❤️  Health:  %s/health\n", baseURL)
+	fmt.Printf("📚 Swagger: %s/swagger/index.html\n", baseURL)
+	fmt.Printf("🔑 Auth:    %s/auth\n", baseURL)
+	fmt.Println("───────────────────────────────────────")
+	fmt.Println("")
+
 	// Graceful shutdown
 	go func() {
-		logger.Info("server starting", zap.Int("port", cfg.Port))
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Fatal("server failed", zap.Error(err))
 		}

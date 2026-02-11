@@ -1,12 +1,5 @@
 basePath: /
 definitions:
-  dto.GoogleCallbackRequest:
-    properties:
-      code:
-        type: string
-    required:
-    - code
-    type: object
   dto.GoogleCallbackResponse:
     properties:
       access_token:
@@ -56,17 +49,19 @@ info:
   version: "1.0"
 paths:
   /auth/google/callback:
-    post:
-      consumes:
-      - application/json
+    get:
       description: Exchanges a Google authorization code for access and refresh tokens
       parameters:
       - description: Google authorization code
-        in: body
-        name: body
+        in: query
+        name: code
         required: true
-        schema:
-          $ref: '#/definitions/dto.GoogleCallbackRequest'
+        type: string
+      - description: State parameter for CSRF protection
+        in: query
+        name: state
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -83,6 +78,17 @@ paths:
           schema:
             $ref: '#/definitions/lib.ErrorResponse'
       summary: Authenticate with Google
+      tags:
+      - Auth
+  /auth/google/url:
+    get:
+      consumes:
+      - application/json
+      description: Generates a new Google OAuth URL for authentication
+      produces:
+      - application/json
+      responses: {}
+      summary: Get Google OAuth URL
       tags:
       - Auth
   /auth/refresh:

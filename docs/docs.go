@@ -16,11 +16,8 @@ const docTemplate = `{
     "basePath": "{{.BasePath}}",
     "paths": {
         "/auth/google/callback": {
-            "post": {
+            "get": {
                 "description": "Exchanges a Google authorization code for access and refresh tokens",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
@@ -30,13 +27,18 @@ const docTemplate = `{
                 "summary": "Authenticate with Google",
                 "parameters": [
                     {
+                        "type": "string",
                         "description": "Google authorization code",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.GoogleCallbackRequest"
-                        }
+                        "name": "code",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "State parameter for CSRF protection",
+                        "name": "state",
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -59,6 +61,22 @@ const docTemplate = `{
                         }
                     }
                 }
+            }
+        },
+        "/auth/google/url": {
+            "get": {
+                "description": "Generates a new Google OAuth URL for authentication",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Get Google OAuth URL",
+                "responses": {}
             }
         },
         "/auth/refresh": {
@@ -109,17 +127,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "dto.GoogleCallbackRequest": {
-            "type": "object",
-            "required": [
-                "code"
-            ],
-            "properties": {
-                "code": {
-                    "type": "string"
-                }
-            }
-        },
         "dto.GoogleCallbackResponse": {
             "type": "object",
             "properties": {

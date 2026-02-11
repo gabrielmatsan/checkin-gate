@@ -25,7 +25,7 @@ func (r *PostgresUserRepository) Save(ctx context.Context, user *identity.User) 
 		Insert("users").
 		Columns("id", "first_name", "last_name", "email", "role").
 		Values(user.ID, user.FirstName, user.LastName, user.Email, user.Role).
-		Suffix("RETURNING *").
+		Suffix("RETURNING id, first_name, last_name, email, role, created_at, updated_at").
 		ToSql()
 	if err != nil {
 		return nil, err

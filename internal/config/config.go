@@ -14,8 +14,8 @@ type Config struct {
 	Port               int         `env:"PORT" envDefault:"8080"`
 	JWTSecret          string      `env:"JWT_SECRET,required"`
 	Env                Environment `env:"ENV" envDefault:"development"`
-	GoogleClientID     string      `env:"GOOGLE_CLIENT_ID"`
-	GoogleClientSecret string      `env:"GOOGLE_CLIENT_SECRET"`
+	GoogleClientID     string      `env:"GOOGLE_CLIENT_ID,required"`
+	GoogleClientSecret string      `env:"GOOGLE_CLIENT_SECRET,required"`
 	GoogleRedirectURL  string      `env:"GOOGLE_REDIRECT_URL" envDefault:"http://localhost:8080/auth/google/callback"`
 }
 

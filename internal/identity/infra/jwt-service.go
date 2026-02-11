@@ -73,3 +73,13 @@ func (s *JWTService) ValidateAccessToken(tokenString string) (*Claims, error) {
 func (s *JWTService) GetRefreshTokenTTL() time.Duration {
 	return s.refreshTokenTTL
 }
+
+// ExtractClaims valida token e retorna userID e role
+// Compatível com middleware.NewValidateTokenFunc
+func (s *JWTService) ExtractClaims(token string) (userID string, role string, err error) {
+	claims, err := s.ValidateAccessToken(token)
+	if err != nil {
+		return "", "", err
+	}
+	return claims.UserID, claims.Role, nil
+}

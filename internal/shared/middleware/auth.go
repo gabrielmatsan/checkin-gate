@@ -57,3 +57,18 @@ func GetRole(ctx context.Context) string {
 	}
 	return ""
 }
+
+// NewValidateTokenFunc cria um ValidateTokenFunc a partir de uma função de extração
+// Uso: middleware.Auth(middleware.NewValidateTokenFunc(extractClaims))
+func NewValidateTokenFunc(extract func(token string) (userID string, role string, err error)) ValidateTokenFunc {
+	return func(token string) (*TokenClaims, error) {
+		userID, role, err := extract(token)
+		if err != nil {
+			return nil, err
+		}
+		return &TokenClaims{
+			UserID: userID,
+			Role:   role,
+		}, nil
+	}
+}

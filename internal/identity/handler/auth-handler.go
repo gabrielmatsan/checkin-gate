@@ -9,49 +9,46 @@ import (
 	"github.com/gabrielmatsan/checkin-gate/internal/shared/lib"
 )
 
-
-
 type AuthHandler struct {
 	authenticateWithGoogle *usecases.AuthenticateWithGoogleUseCase
 	refreshToken           *usecases.RefreshTokenUseCase
+	getGoogleAuthURL       *usecases.GetGoogleAuthURLUseCase
 }
 
 func NewAuthHandler(
+	getGoogleAuthURL *usecases.GetGoogleAuthURLUseCase,
 	authenticateWithGoogle *usecases.AuthenticateWithGoogleUseCase,
 	refreshToken *usecases.RefreshTokenUseCase,
 ) *AuthHandler {
 	return &AuthHandler{
+		getGoogleAuthURL:       getGoogleAuthURL,
 		authenticateWithGoogle: authenticateWithGoogle,
 		refreshToken:           refreshToken,
 	}
 }
 
-
 // GoogleCallback authenticates a user via Google OAuth.
 // @Summary      Authenticate with Google
 // @Description  Exchanges a Google authorization code for access and refresh tokens
 // @Tags         Auth
-// @Accept       json
 // @Produce      json
-// @Param        body  body      dto.GoogleCallbackRequest   true  "Google authorization code"
+// @Param        code   query     string  true  "Google authorization code"
+// @Param        state  query     string  true  "State parameter for CSRF protection"
 // @Success      200   {object}  dto.GoogleCallbackResponse
 // @Failure      400   {object}  lib.ErrorResponse
 // @Failure      401   {object}  lib.ErrorResponse
-// @Router       /auth/google/callback [post]
+// @Router       /auth/google/callback [get]
 func (h *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
-	var req dto.GoogleCallbackRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		lib.RespondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	if !lib.ValidateAndRespond(w, &req) {
+	// Google redirects with query parameters: ?code=XXX&state=XXX
+	code := r.URL.Query().Get("code")
+	if code == "" {
+		lib.RespondError(w, http.StatusBadRequest, "missing code parameter")
 		return
 	}
 
 	// Request DTO → Use Case Input
 	input := &usecases.AuthenticateWithGoogleInput{
-		Code:      req.Code,
+		Code:      code,
 		IpAddress: lib.GetClientIP(r),
 		UserAgent: r.UserAgent(),
 	}
@@ -119,4 +116,21 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 	}
 
 	lib.RespondJSON(w, http.StatusOK, resp)
+}
+
+// GetGoogleAuthURL generates a new Google OAuth URL.
+// @Summary      Get Google OAuth URL
+// @Description  Generates a new Google OAuth URL for authentication
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Router       /auth/google/url [get]
+func (h *AuthHandler) GetGoogleAuthURL(w http.ResponseWriter, r *http.Request) {
+	output, err := h.getGoogleAuthURL.Execute()
+	if err != nil {
+		lib.RespondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	lib.RespondJSON(w, http.StatusOK, output)
 }
