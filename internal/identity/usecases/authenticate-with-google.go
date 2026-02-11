@@ -61,12 +61,12 @@ func (uc *AuthenticateWithGoogleUseCase) Execute(ctx context.Context, input *Aut
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate user ID: %w", err)
 		}
-		user = identity.NewUser(
-			id,
-			getUserInfo.FirstName,
-			getUserInfo.LastName,
-			getUserInfo.Email,
-		)
+		user = identity.NewUser(identity.NewUserParams{
+			ID:        id,
+			FirstName: getUserInfo.FirstName,
+			LastName:  getUserInfo.LastName,
+			Email:     getUserInfo.Email,
+		})
 
 		user, err = uc.userRepo.Save(ctx, user)
 		if err != nil {

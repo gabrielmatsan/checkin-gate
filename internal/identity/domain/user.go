@@ -9,6 +9,13 @@ const (
 	UserRoleUser  UserRole = "user"
 )
 
+type NewUserParams struct {
+	ID        string
+	FirstName string
+	LastName  string
+	Email     string
+}
+
 type User struct {
 	ID        string     `json:"id" db:"id"`
 	FirstName string     `json:"first_name" db:"first_name"`
@@ -19,12 +26,12 @@ type User struct {
 	UpdatedAt *time.Time `json:"updated_at,omitempty" db:"updated_at"`
 }
 
-func NewUser(id, firstName, lastName, email string) *User {
+func NewUser(params NewUserParams) *User {
 	return &User{
-		ID:        id,
-		FirstName: firstName,
-		LastName:  lastName,
-		Email:     email,
+		ID:        params.ID,
+		FirstName: params.FirstName,
+		LastName:  params.LastName,
+		Email:     params.Email,
 		Role:      UserRoleUser,
 		CreatedAt: time.Now(),
 	}
@@ -43,3 +50,4 @@ func (u *User) touch() {
 	now := time.Now()
 	u.UpdatedAt = &now
 }
+
