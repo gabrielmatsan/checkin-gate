@@ -1,0 +1,125 @@
+basePath: /
+definitions:
+  dto.GoogleCallbackRequest:
+    properties:
+      code:
+        type: string
+    required:
+    - code
+    type: object
+  dto.GoogleCallbackResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+      user:
+        $ref: '#/definitions/dto.UserResponse'
+    type: object
+  dto.RefreshTokenRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  dto.RefreshTokenResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  dto.UserResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      role:
+        type: string
+    type: object
+  lib.ErrorResponse:
+    properties:
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API para sistema de check-in com autenticação OAuth Google
+  title: Checkin Gate API
+  version: "1.0"
+paths:
+  /auth/google/callback:
+    post:
+      consumes:
+      - application/json
+      description: Exchanges a Google authorization code for access and refresh tokens
+      parameters:
+      - description: Google authorization code
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.GoogleCallbackRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GoogleCallbackResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/lib.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/lib.ErrorResponse'
+      summary: Authenticate with Google
+      tags:
+      - Auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Uses a valid refresh token to obtain a new access token and rotated
+        refresh token
+      parameters:
+      - description: Current refresh token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.RefreshTokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/lib.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/lib.ErrorResponse'
+      summary: Refresh tokens
+      tags:
+      - Auth
+securityDefinitions:
+  BearerAuth:
+    description: Bearer token JWT
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

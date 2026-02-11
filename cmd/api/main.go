@@ -1,0 +1,112 @@
+package main
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"github.com/gabrielmatsan/checkin-gate/internal/config"
+	"github.com/gabrielmatsan/checkin-gate/internal/identity"
+	"github.com/gabrielmatsan/checkin-gate/internal/shared"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
+	"go.uber.org/zap"
+
+	_ "github.com/gabrielmatsan/checkin-gate/docs"
+)
+
+// @title           Checkin Gate API
+// @version         1.0
+// @description     API para sistema de check-in com autenticação OAuth Google
+
+// @host      localhost:8080
+// @BasePath  /
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Bearer token JWT
+
+func main() {
+	// Logger
+	logger, err := zap.NewProduction()
+	if err != nil {
+		panic(err)
+	}
+	defer logger.Sync()
+
+	// Config
+	cfg, err := config.Load()
+	if err != nil {
+		logger.Fatal("failed to load config", zap.Error(err))
+	}
+
+	// Database
+	db, err := shared.NewDatabase(cfg.DatabaseURL, logger)
+	if err != nil {
+		logger.Fatal("failed to connect to database", zap.Error(err))
+	}
+	defer db.Close()
+
+	// Health check
+	if err := db.HealthCheck(); err != nil {
+		logger.Fatal("database health check failed", zap.Error(err))
+	}
+	logger.Info("database connected")
+
+	// Router
+	router := chi.NewRouter()
+	router.Use(middleware.Recoverer)
+	router.Use(middleware.RequestID)
+	router.Use(middleware.RealIP)
+
+	// Routes
+	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	})
+
+	// Swagger
+	router.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("/swagger/doc.json"),
+	))
+
+	identity.RegisterRoutes(router, db.DB, cfg)
+
+	// Server
+	srv := &http.Server{
+		Addr:         fmt.Sprintf(":%d", cfg.Port),
+		Handler:      router,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+
+	// Graceful shutdown
+	go func() {
+		logger.Info("server starting", zap.Int("port", cfg.Port))
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Fatal("server failed", zap.Error(err))
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	logger.Info("shutting down server")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		logger.Fatal("server forced to shutdown", zap.Error(err))
+	}
+
+	logger.Info("server stopped")
+}
