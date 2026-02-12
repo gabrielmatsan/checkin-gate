@@ -20,6 +20,20 @@ func NewEventHandler(createEvent *events.CreateEventUseCase) *EventHandler {
 	}
 }
 
+// CreateEvent creates a new event.
+// @Summary      Create event
+// @Description  Creates a new event. Only admins can create events.
+// @Tags         Events
+// @Accept       json
+// @Produce      json
+// @Param        body  body      dto.CreateEventRequest  true  "Event details"
+// @Success      201   {object}  dto.EventResponse
+// @Failure      400   {object}  lib.ErrorResponse  "Invalid request body or validation error"
+// @Failure      401   {object}  lib.ErrorResponse  "Unauthorized"
+// @Failure      403   {object}  lib.ErrorResponse  "User not authorized to create event"
+// @Failure      500   {object}  lib.ErrorResponse  "Internal server error"
+// @Security     BearerAuth
+// @Router       /events [post]
 func (h *EventHandler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	role := middleware.GetRole(r.Context())
 

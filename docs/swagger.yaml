@@ -1,5 +1,48 @@
 basePath: /
 definitions:
+  dto.CreateEventRequest:
+    properties:
+      allowed_domains:
+        items:
+          type: string
+        type: array
+      description:
+        maxLength: 500
+        type: string
+      end_date:
+        type: string
+      name:
+        maxLength: 255
+        minLength: 3
+        type: string
+      start_date:
+        type: string
+    required:
+    - end_date
+    - name
+    - start_date
+    type: object
+  dto.EventResponse:
+    properties:
+      allowed_domains:
+        items:
+          type: string
+        type: array
+      created_at:
+        type: string
+      description:
+        type: string
+      end_date:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      start_date:
+        type: string
+      updated_at:
+        type: string
+    type: object
   dto.GoogleCallbackResponse:
     properties:
       access_token:
@@ -122,6 +165,46 @@ paths:
       summary: Refresh tokens
       tags:
       - Auth
+  /events:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new event. Only admins can create events.
+      parameters:
+      - description: Event details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateEventRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.EventResponse'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/lib.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/lib.ErrorResponse'
+        "403":
+          description: User not authorized to create event
+          schema:
+            $ref: '#/definitions/lib.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/lib.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create event
+      tags:
+      - Events
 securityDefinitions:
   BearerAuth:
     description: Bearer token JWT
