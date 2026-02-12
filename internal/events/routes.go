@@ -15,10 +15,13 @@ func RegisterRoutes(r chi.Router, db *sqlx.DB, cfg *config.Config) {
 	jwtService := infra.NewJWTService(cfg.JWTSecret)
 
 	eventRepo := repository.NewPostgresEventRepository(db)
+	activityRepo := repository.NewPostgresActivityRepository(db)
 
 	createEvent := usecases.NewCreateEventUseCase(eventRepo)
 
-	eventHandler := handler.NewEventHandler(createEvent)
+	getEventWithActivities := usecases.NewGetEventWithActivitiesUseCase(eventRepo, activityRepo)
+
+	eventHandler := handler.NewEventHandler(createEvent, getEventWithActivities)
 
 	r.Route("/events", func(r chi.Router) {
 		// protected routes
@@ -26,6 +29,7 @@ func RegisterRoutes(r chi.Router, db *sqlx.DB, cfg *config.Config) {
 			r.Use(middleware.Auth(middleware.NewValidateTokenFunc(jwtService.ExtractClaims)))
 
 			r.Post("/", eventHandler.CreateEvent)
+			r.Get("/{event_id}/activities", eventHandler.GetEventWithActivities)
 		})
 	})
 }

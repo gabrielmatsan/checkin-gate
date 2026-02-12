@@ -20,15 +20,20 @@ type UpdateEventRequest struct {
 	EndDate        *time.Time `json:"end_date"`
 }
 
+// EventWithActivitiesResponse represents the response body for an event with its activities
+type EventWithActivitiesRequest struct {
+	EventID string `json:"event_id" validate:"required"`
+}
+
 // EventResponse represents the response body for an event
 type EventResponse struct {
-	ID             string    `json:"id"`
-	Name           string    `json:"name"`
-	AllowedDomains []string  `json:"allowed_domains"`
-	Description    *string   `json:"description,omitempty"`
-	StartDate      time.Time `json:"start_date"`
-	EndDate        time.Time `json:"end_date"`
-	CreatedAt      time.Time `json:"created_at"`
+	ID             string     `json:"id"`
+	Name           string     `json:"name"`
+	AllowedDomains []string   `json:"allowed_domains"`
+	Description    *string    `json:"description,omitempty"`
+	StartDate      time.Time  `json:"start_date"`
+	EndDate        time.Time  `json:"end_date"`
+	CreatedAt      time.Time  `json:"created_at"`
 	UpdatedAt      *time.Time `json:"updated_at,omitempty"`
 }
 

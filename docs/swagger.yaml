@@ -77,6 +77,55 @@ definitions:
       role:
         type: string
     type: object
+  events.Activity:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      end_date:
+        type: string
+      event_id:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      start_date:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  events.Event:
+    properties:
+      allowed_domains:
+        items:
+          type: string
+        type: array
+      created_at:
+        type: string
+      description:
+        type: string
+      end_date:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      start_date:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  events.EventWithActivities:
+    properties:
+      activities:
+        items:
+          $ref: '#/definitions/events.Activity'
+        type: array
+      event:
+        $ref: '#/definitions/events.Event'
+    type: object
   lib.ErrorResponse:
     properties:
       error:
@@ -203,6 +252,41 @@ paths:
       security:
       - BearerAuth: []
       summary: Create event
+      tags:
+      - Events
+  /events/{event_id}/activities:
+    get:
+      consumes:
+      - application/json
+      description: Gets an event with its activities.
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/events.EventWithActivities'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/lib.ErrorResponse'
+        "404":
+          description: Event not found
+          schema:
+            $ref: '#/definitions/lib.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/lib.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get event with activities
       tags:
       - Events
 securityDefinitions:

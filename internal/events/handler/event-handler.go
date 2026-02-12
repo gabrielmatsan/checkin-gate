@@ -8,13 +8,15 @@ import (
 	events "github.com/gabrielmatsan/checkin-gate/internal/events/usecases"
 	"github.com/gabrielmatsan/checkin-gate/internal/shared/lib"
 	"github.com/gabrielmatsan/checkin-gate/internal/shared/middleware"
+	"github.com/go-chi/chi/v5"
 )
 
 type EventHandler struct {
-	createEvent *events.CreateEventUseCase
+	createEvent            *events.CreateEventUseCase
+	getEventWithActivities *events.GetEventWithActivitiesUseCase
 }
 
-func NewEventHandler(createEvent *events.CreateEventUseCase) *EventHandler {
+func NewEventHandler(createEvent *events.CreateEventUseCase, getEventWithActivities *events.GetEventWithActivitiesUseCase) *EventHandler {
 	return &EventHandler{
 		createEvent: createEvent,
 	}
@@ -82,4 +84,49 @@ func (h *EventHandler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	lib.RespondJSON(w, http.StatusCreated, resp)
+}
+
+// GetEventWithActivities gets an event with its activities.
+// @Summary      Get event with activities
+// @Description  Gets an event with its activities.
+// @Tags         Events
+// @Accept       json
+// @Produce      json
+// @Param        event_id  path      string  true  "Event ID"
+// @Success      200   {object}  events.EventWithActivities
+// @Failure      400   {object}  lib.ErrorResponse  "Invalid request body or validation error"
+// @Failure      404   {object}  lib.ErrorResponse  "Event not found"
+// @Failure      500   {object}  lib.ErrorResponse  "Internal server error"
+// @Security     BearerAuth
+// @Router       /events/{event_id}/activities [get]
+func (h *EventHandler) GetEventWithActivities(w http.ResponseWriter, r *http.Request) {
+	eventID := chi.URLParam(r, "event_id")
+	var req dto.EventWithActivitiesRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		lib.RespondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if err := lib.Validate(&req); err != nil {
+		lib.RespondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	input := events.GetEventWithActivitiesInput{
+		EventID: eventID,
+	}
+
+	output, err := h.getEventWithActivities.Execute(r.Context(), input)
+	if err != nil {
+		lib.RespondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	resp := events.EventWithActivities{
+		Event:      output.Event,
+		Activities: output.Activities,
+	}
+
+	lib.RespondJSON(w, http.StatusOK, resp)
 }

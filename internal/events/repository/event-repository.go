@@ -6,6 +6,7 @@ import (
 	events "github.com/gabrielmatsan/checkin-gate/internal/events/domain"
 )
 
+
 type EventRepository interface {
 	Save(ctx context.Context, event *events.Event) (*events.Event, error)
 	FindByID(ctx context.Context, id string) (*events.Event, error)
