@@ -63,6 +63,28 @@ func (h *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Set Access Token cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:     "access_token",
+		Value:    output.AccessToken,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   900, // 15 minutes
+	})
+
+	// Set Refresh Token cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    output.RefreshToken,
+		Path:     "/auth/refresh",
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteStrictMode,
+		MaxAge:   604800, // 7 days
+	})
+
 	// Use Case Output → Response DTO
 	resp := dto.GoogleCallbackResponse{
 		AccessToken:  output.AccessToken,

@@ -9,9 +9,10 @@ import (
 	"github.com/gabrielmatsan/checkin-gate/internal/shared/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
+	"go.uber.org/zap"
 )
 
-func RegisterRoutes(r chi.Router, db *sqlx.DB, cfg *config.Config) {
+func RegisterRoutes(r chi.Router, db *sqlx.DB, cfg *config.Config, logger *zap.Logger) {
 	jwtService := infra.NewJWTService(cfg.JWTSecret)
 
 	eventRepo := repository.NewPostgresEventRepository(db)
@@ -21,7 +22,7 @@ func RegisterRoutes(r chi.Router, db *sqlx.DB, cfg *config.Config) {
 
 	getEventWithActivities := usecases.NewGetEventWithActivitiesUseCase(eventRepo, activityRepo)
 
-	eventHandler := handler.NewEventHandler(createEvent, getEventWithActivities)
+	eventHandler := handler.NewEventHandler(logger, createEvent, getEventWithActivities)
 
 	r.Route("/events", func(r chi.Router) {
 		// protected routes

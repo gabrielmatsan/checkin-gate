@@ -7,18 +7,22 @@ import (
 	"github.com/gabrielmatsan/checkin-gate/internal/events/handler/dto"
 	events "github.com/gabrielmatsan/checkin-gate/internal/events/usecases"
 	"github.com/gabrielmatsan/checkin-gate/internal/shared/lib"
-	"github.com/gabrielmatsan/checkin-gate/internal/shared/middleware"
+	//"github.com/gabrielmatsan/checkin-gate/internal/shared/middleware"
 	"github.com/go-chi/chi/v5"
+	"go.uber.org/zap"
 )
 
 type EventHandler struct {
+	logger                 *zap.Logger
 	createEvent            *events.CreateEventUseCase
 	getEventWithActivities *events.GetEventWithActivitiesUseCase
 }
 
-func NewEventHandler(createEvent *events.CreateEventUseCase, getEventWithActivities *events.GetEventWithActivitiesUseCase) *EventHandler {
+func NewEventHandler(logger *zap.Logger, createEvent *events.CreateEventUseCase, getEventWithActivities *events.GetEventWithActivitiesUseCase) *EventHandler {
 	return &EventHandler{
-		createEvent: createEvent,
+		logger:                 logger,
+		createEvent:            createEvent,
+		getEventWithActivities: getEventWithActivities,
 	}
 }
 
@@ -37,23 +41,30 @@ func NewEventHandler(createEvent *events.CreateEventUseCase, getEventWithActivit
 // @Security     BearerAuth
 // @Router       /events [post]
 func (h *EventHandler) CreateEvent(w http.ResponseWriter, r *http.Request) {
-	role := middleware.GetRole(r.Context())
+	//role := middleware.GetRole(r.Context())
 
-	isUserAuthorized := middleware.ValidateRole(role, []string{"admin"})
+	// isUserAuthorized := middleware.ValidateRole(role, []string{"admin"})
 
-	if !isUserAuthorized {
-		lib.RespondError(w, http.StatusForbidden, "user not authorized to create event")
-		return
-	}
+	// if !isUserAuthorized {
+	// 	lib.RespondError(w, http.StatusForbidden, "user not authorized to create event")
+	// 	return
+	// }
 
 	var req dto.CreateEventRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		lib.RespondError(w, http.StatusBadRequest, "invalid request body")
+		h.logger.Error("failed to decode request body",
+			zap.Error(err),
+			zap.String("content_type", r.Header.Get("Content-Type")),
+		)
+		lib.RespondError(w, http.StatusBadRequest, "invalid request body: "+err.Error())
 		return
 	}
 
+	h.logger.Info("request decoded", zap.Any("request", req))
+
 	if err := lib.Validate(&req); err != nil {
+		h.logger.Error("validation failed", zap.Error(err))
 		lib.RespondError(w, http.StatusBadRequest, err.Error())
 		return
 	}

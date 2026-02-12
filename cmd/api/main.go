@@ -110,7 +110,7 @@ func main() {
 	})
 
 	identity.RegisterRoutes(router, db.DB, cfg)
-	events.RegisterRoutes(router, db.DB, cfg)
+	events.RegisterRoutes(router, db.DB, cfg, logger)
 
 	// Server
 	srv := &http.Server{
