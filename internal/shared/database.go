@@ -4,10 +4,13 @@ import (
 	"strings"
 	"time"
 
+	sq "github.com/Masterminds/squirrel"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 )
+
+var psql = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
 type Database struct {
 	*sqlx.DB

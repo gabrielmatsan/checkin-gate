@@ -40,15 +40,19 @@ func NewAuthHandler(
 // @Router       /auth/google/callback [get]
 func (h *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	// Google redirects with query parameters: ?code=XXX&state=XXX
-	code := r.URL.Query().Get("code")
-	if code == "" {
-		lib.RespondError(w, http.StatusBadRequest, "missing code parameter")
+	req := dto.GoogleCallbackRequest{
+		Code:  r.URL.Query().Get("code"),
+		State: r.URL.Query().Get("state"),
+	}
+
+	if err := lib.Validate(&req); err != nil {
+		lib.RespondError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	// Request DTO → Use Case Input
 	input := &usecases.AuthenticateWithGoogleInput{
-		Code:      code,
+		Code:      req.Code,
 		IpAddress: lib.GetClientIP(r),
 		UserAgent: r.UserAgent(),
 	}
@@ -92,7 +96,8 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !lib.ValidateAndRespond(w, &req) {
+	if err := lib.Validate(&req); err != nil {
+		lib.RespondError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 

@@ -58,6 +58,21 @@ func GetRole(ctx context.Context) string {
 	return ""
 }
 
+// role do user, e roles permitidas
+func ValidateRole(
+	role string,
+	allowedRoles []string,
+) bool {
+
+	for _, allowedRole := range allowedRoles {
+		if role == allowedRole {
+			return true
+		}
+	}
+
+	return false
+}
+
 // NewValidateTokenFunc cria um ValidateTokenFunc a partir de uma função de extração
 // Uso: middleware.Auth(middleware.NewValidateTokenFunc(extractClaims))
 func NewValidateTokenFunc(extract func(token string) (userID string, role string, err error)) ValidateTokenFunc {

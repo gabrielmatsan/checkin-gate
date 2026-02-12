@@ -2,7 +2,6 @@ package lib
 
 import (
 	"fmt"
-	"net/http"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
@@ -10,12 +9,11 @@ import (
 
 var validate = validator.New()
 
-func ValidateAndRespond(w http.ResponseWriter, s any) bool {
+func Validate(s any) error {
 	if err := validate.Struct(s); err != nil {
 		validationErrors, ok := err.(validator.ValidationErrors)
 		if !ok {
-			RespondError(w, http.StatusBadRequest, "invalid request")
-			return false
+			return fmt.Errorf("invalid request")
 		}
 
 		messages := make([]string, 0, len(validationErrors))
@@ -23,8 +21,7 @@ func ValidateAndRespond(w http.ResponseWriter, s any) bool {
 			messages = append(messages, fmt.Sprintf("%s is %s", fe.Field(), fe.Tag()))
 		}
 
-		RespondError(w, http.StatusBadRequest, strings.Join(messages, ", "))
-		return false
+		return fmt.Errorf(strings.Join(messages, ", "))
 	}
-	return true
+	return nil
 }
