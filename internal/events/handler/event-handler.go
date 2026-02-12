@@ -7,6 +7,8 @@ import (
 	"github.com/gabrielmatsan/checkin-gate/internal/events/handler/dto"
 	events "github.com/gabrielmatsan/checkin-gate/internal/events/usecases"
 	"github.com/gabrielmatsan/checkin-gate/internal/shared/lib"
+	"github.com/gabrielmatsan/checkin-gate/internal/shared/middleware"
+
 	//"github.com/gabrielmatsan/checkin-gate/internal/shared/middleware"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
@@ -41,14 +43,14 @@ func NewEventHandler(logger *zap.Logger, createEvent *events.CreateEventUseCase,
 // @Security     BearerAuth
 // @Router       /events [post]
 func (h *EventHandler) CreateEvent(w http.ResponseWriter, r *http.Request) {
-	//role := middleware.GetRole(r.Context())
+	role := middleware.GetRole(r.Context())
 
-	// isUserAuthorized := middleware.ValidateRole(role, []string{"admin"})
+	isUserAuthorized := middleware.ValidateRole(role, []string{"admin"})
 
-	// if !isUserAuthorized {
-	// 	lib.RespondError(w, http.StatusForbidden, "user not authorized to create event")
-	// 	return
-	// }
+	if !isUserAuthorized {
+		lib.RespondError(w, http.StatusForbidden, "user not authorized to create event")
+		return
+	}
 
 	var req dto.CreateEventRequest
 
