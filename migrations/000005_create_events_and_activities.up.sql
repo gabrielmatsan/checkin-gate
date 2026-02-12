@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS events (
   end_date TIMESTAMPTZ NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ
-)
+);
 
 CREATE TABLE IF NOT EXISTS activities (
   id VARCHAR(36) PRIMARY KEY,
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS activities (
   end_date TIMESTAMPTZ NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ
-)
+);
 
 -- index para a coluna event_id
 CREATE INDEX IF NOT EXISTS idx_activities_event_id ON activities (event_id);
