@@ -13,9 +13,14 @@ type ErrorResponse struct {
 }
 
 func RespondJSON(w http.ResponseWriter, status int, data any) {
+	body, err := json.Marshal(data)
+	if err != nil {
+		RespondError(w, http.StatusInternalServerError, "failed to encode response")
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
+	w.Write(body)
 }
 
 func RespondError(w http.ResponseWriter, status int, message string) {
