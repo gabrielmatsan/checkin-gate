@@ -1,6 +1,25 @@
 basePath: /
 definitions:
-  dto.CreateEventRequest:
+  handler.ActivityResponse:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      end_date:
+        type: string
+      event_id:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      start_date:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  handler.CreateEventRequest:
     properties:
       allowed_domains:
         items:
@@ -22,7 +41,7 @@ definitions:
     - name
     - start_date
     type: object
-  dto.EventResponse:
+  handler.CreateEventResponse:
     properties:
       allowed_domains:
         items:
@@ -43,30 +62,53 @@ definitions:
       updated_at:
         type: string
     type: object
-  dto.GoogleCallbackResponse:
+  handler.EventResponse:
+    properties:
+      allowed_domains:
+        items:
+          type: string
+        type: array
+      created_at:
+        type: string
+      description:
+        type: string
+      end_date:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      start_date:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  handler.EventWithActivitiesResponse:
+    properties:
+      activities:
+        items:
+          $ref: '#/definitions/handler.ActivityResponse'
+        type: array
+      event:
+        $ref: '#/definitions/handler.EventResponse'
+    type: object
+  handler.GetGoogleAuthURLResponse:
+    properties:
+      state:
+        type: string
+      url:
+        type: string
+    type: object
+  handler.GoogleCallbackResponse:
     properties:
       access_token:
         type: string
       refresh_token:
         type: string
       user:
-        $ref: '#/definitions/dto.UserResponse'
+        $ref: '#/definitions/handler.GoogleCallbackUserResponse'
     type: object
-  dto.RefreshTokenRequest:
-    properties:
-      refresh_token:
-        type: string
-    required:
-    - refresh_token
-    type: object
-  dto.RefreshTokenResponse:
-    properties:
-      access_token:
-        type: string
-      refresh_token:
-        type: string
-    type: object
-  dto.UserResponse:
+  handler.GoogleCallbackUserResponse:
     properties:
       email:
         type: string
@@ -77,54 +119,12 @@ definitions:
       role:
         type: string
     type: object
-  events.Activity:
+  handler.RefreshTokenResponse:
     properties:
-      created_at:
+      access_token:
         type: string
-      description:
+      refresh_token:
         type: string
-      end_date:
-        type: string
-      event_id:
-        type: string
-      id:
-        type: string
-      name:
-        type: string
-      start_date:
-        type: string
-      updated_at:
-        type: string
-    type: object
-  events.Event:
-    properties:
-      allowed_domains:
-        items:
-          type: string
-        type: array
-      created_at:
-        type: string
-      description:
-        type: string
-      end_date:
-        type: string
-      id:
-        type: string
-      name:
-        type: string
-      start_date:
-        type: string
-      updated_at:
-        type: string
-    type: object
-  events.EventWithActivities:
-    properties:
-      activities:
-        items:
-          $ref: '#/definitions/events.Activity'
-        type: array
-      event:
-        $ref: '#/definitions/events.Event'
     type: object
   lib.ErrorResponse:
     properties:
@@ -160,7 +160,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.GoogleCallbackResponse'
+            $ref: '#/definitions/handler.GoogleCallbackResponse'
         "400":
           description: Bad Request
           schema:
@@ -179,34 +179,29 @@ paths:
       description: Generates a new Google OAuth URL for authentication
       produces:
       - application/json
-      responses: {}
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.GetGoogleAuthURLResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/lib.ErrorResponse'
       summary: Get Google OAuth URL
       tags:
       - Auth
   /auth/refresh:
     post:
-      consumes:
-      - application/json
       description: Uses a valid refresh token to obtain a new access token and rotated
         refresh token
-      parameters:
-      - description: Current refresh token
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/dto.RefreshTokenRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.RefreshTokenResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/lib.ErrorResponse'
+            $ref: '#/definitions/handler.RefreshTokenResponse'
         "401":
           description: Unauthorized
           schema:
@@ -225,14 +220,14 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/dto.CreateEventRequest'
+          $ref: '#/definitions/handler.CreateEventRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/dto.EventResponse'
+            $ref: '#/definitions/handler.CreateEventResponse'
         "400":
           description: Invalid request body or validation error
           schema:
@@ -271,7 +266,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/events.EventWithActivities'
+            $ref: '#/definitions/handler.EventWithActivitiesResponse'
         "400":
           description: Invalid request body or validation error
           schema:

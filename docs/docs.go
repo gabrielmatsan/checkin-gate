@@ -45,7 +45,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.GoogleCallbackResponse"
+                            "$ref": "#/definitions/handler.GoogleCallbackResponse"
                         }
                     },
                     "400": {
@@ -76,15 +76,25 @@ const docTemplate = `{
                     "Auth"
                 ],
                 "summary": "Get Google OAuth URL",
-                "responses": {}
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.GetGoogleAuthURLResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/lib.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/auth/refresh": {
             "post": {
                 "description": "Uses a valid refresh token to obtain a new access token and rotated refresh token",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
@@ -92,28 +102,11 @@ const docTemplate = `{
                     "Auth"
                 ],
                 "summary": "Refresh tokens",
-                "parameters": [
-                    {
-                        "description": "Current refresh token",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.RefreshTokenRequest"
-                        }
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.RefreshTokenResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/lib.ErrorResponse"
+                            "$ref": "#/definitions/handler.RefreshTokenResponse"
                         }
                     },
                     "401": {
@@ -150,7 +143,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.CreateEventRequest"
+                            "$ref": "#/definitions/handler.CreateEventRequest"
                         }
                     }
                 ],
@@ -158,7 +151,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/dto.EventResponse"
+                            "$ref": "#/definitions/handler.CreateEventResponse"
                         }
                     },
                     "400": {
@@ -219,7 +212,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/events.EventWithActivities"
+                            "$ref": "#/definitions/handler.EventWithActivitiesResponse"
                         }
                     },
                     "400": {
@@ -245,7 +238,36 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "dto.CreateEventRequest": {
+        "handler.ActivityResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "event_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "start_date": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.CreateEventRequest": {
             "type": "object",
             "required": [
                 "end_date",
@@ -276,7 +298,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.EventResponse": {
+        "handler.CreateEventResponse": {
             "type": "object",
             "properties": {
                 "allowed_domains": {
@@ -308,7 +330,64 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.GoogleCallbackResponse": {
+        "handler.EventResponse": {
+            "type": "object",
+            "properties": {
+                "allowed_domains": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "start_date": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.EventWithActivitiesResponse": {
+            "type": "object",
+            "properties": {
+                "activities": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.ActivityResponse"
+                    }
+                },
+                "event": {
+                    "$ref": "#/definitions/handler.EventResponse"
+                }
+            }
+        },
+        "handler.GetGoogleAuthURLResponse": {
+            "type": "object",
+            "properties": {
+                "state": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.GoogleCallbackResponse": {
             "type": "object",
             "properties": {
                 "access_token": {
@@ -318,33 +397,11 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "user": {
-                    "$ref": "#/definitions/dto.UserResponse"
+                    "$ref": "#/definitions/handler.GoogleCallbackUserResponse"
                 }
             }
         },
-        "dto.RefreshTokenRequest": {
-            "type": "object",
-            "required": [
-                "refresh_token"
-            ],
-            "properties": {
-                "refresh_token": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.RefreshTokenResponse": {
-            "type": "object",
-            "properties": {
-                "access_token": {
-                    "type": "string"
-                },
-                "refresh_token": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.UserResponse": {
+        "handler.GoogleCallbackUserResponse": {
             "type": "object",
             "properties": {
                 "email": {
@@ -361,78 +418,14 @@ const docTemplate = `{
                 }
             }
         },
-        "events.Activity": {
+        "handler.RefreshTokenResponse": {
             "type": "object",
             "properties": {
-                "created_at": {
+                "access_token": {
                     "type": "string"
                 },
-                "description": {
+                "refresh_token": {
                     "type": "string"
-                },
-                "end_date": {
-                    "type": "string"
-                },
-                "event_id": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "start_date": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                }
-            }
-        },
-        "events.Event": {
-            "type": "object",
-            "properties": {
-                "allowed_domains": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "end_date": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "start_date": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                }
-            }
-        },
-        "events.EventWithActivities": {
-            "type": "object",
-            "properties": {
-                "activities": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/events.Activity"
-                    }
-                },
-                "event": {
-                    "$ref": "#/definitions/events.Event"
                 }
             }
         },
