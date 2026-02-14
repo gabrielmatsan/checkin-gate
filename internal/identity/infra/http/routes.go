@@ -14,7 +14,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func RegisterRoutes(r chi.Router, db *sqlx.DB, cfg *config.Config) {
+func RegisterIdentityRoutes(r chi.Router, db *sqlx.DB, cfg *config.Config) {
 	googleProvider := lib.NewGoogleOAuthProvider(cfg.GoogleClientID, cfg.GoogleClientSecret, cfg.GoogleRedirectURL)
 	jwtService := service.NewJWTService(cfg.JWTSecret)
 	userRepo := persistence.NewPostgresUserRepository(db)
@@ -24,16 +24,19 @@ func RegisterRoutes(r chi.Router, db *sqlx.DB, cfg *config.Config) {
 	authenticateWithGoogle := authenticatewithgoogle.NewUseCase(googleProvider, jwtService, userRepo, sessionRepo)
 	refreshToken := refreshtoken.NewUseCase(jwtService, userRepo, sessionRepo)
 
-	authHandler := handler.NewAuthHandler(getGoogleAuthURL, authenticateWithGoogle, refreshToken)
+	// Create individual handlers
+	googleCallbackHandler := handler.NewGoogleCallbackHandler(authenticateWithGoogle)
+	refreshTokenHandler := handler.NewRefreshTokenHandler(refreshToken)
+	getGoogleAuthURLHandler := handler.NewGetGoogleAuthURLHandler(getGoogleAuthURL)
 
 	r.Route("/auth", func(r chi.Router) {
-		r.Get("/google/url", authHandler.GetGoogleAuthURL)
-		r.Get("/google/callback", authHandler.GoogleCallback)
+		r.Get("/google/url", getGoogleAuthURLHandler.Handle)
+		r.Get("/google/callback", googleCallbackHandler.Handle)
 
 		// protected routes
 		r.Group(func(r chi.Router) {
 			r.Use(middleware.Auth(middleware.NewValidateTokenFunc(jwtService.ExtractClaims)))
-			r.Post("/refresh", authHandler.Refresh)
+			r.Post("/refresh", refreshTokenHandler.Handle)
 		})
 	})
 }

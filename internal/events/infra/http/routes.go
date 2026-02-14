@@ -13,7 +13,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func RegisterRoutes(r chi.Router, db *sqlx.DB, cfg *config.Config, logger *zap.Logger) {
+func RegisterEventsRoutes(r chi.Router, db *sqlx.DB, cfg *config.Config, logger *zap.Logger) {
 	jwtService := service.NewJWTService(cfg.JWTSecret)
 
 	eventRepo := persistence.NewPostgresEventRepository(db)
@@ -22,15 +22,17 @@ func RegisterRoutes(r chi.Router, db *sqlx.DB, cfg *config.Config, logger *zap.L
 	createEvent := createevent.NewUseCase(eventRepo)
 	getEventWithActivities := geteventwithactivities.NewUseCase(eventRepo, activityRepo)
 
-	eventHandler := handler.NewEventHandler(logger, createEvent, getEventWithActivities)
+	// Create individual handlers
+	createEventHandler := handler.NewCreateEventHandler(logger, createEvent)
+	getEventWithActivitiesHandler := handler.NewGetEventWithActivitiesHandler(getEventWithActivities)
 
 	r.Route("/events", func(r chi.Router) {
 		// protected routes
 		r.Group(func(r chi.Router) {
 			r.Use(middleware.Auth(middleware.NewValidateTokenFunc(jwtService.ExtractClaims)))
 
-			r.Post("/", eventHandler.CreateEvent)
-			r.Get("/{event_id}/activities", eventHandler.GetEventWithActivities)
+			r.Post("/", createEventHandler.Handle)
+			r.Get("/{event_id}/activities", getEventWithActivitiesHandler.Handle)
 		})
 	})
 }

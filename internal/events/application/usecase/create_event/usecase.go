@@ -10,6 +10,7 @@ import (
 )
 
 type Input struct {
+	UserRole       string
 	Name           string
 	AllowedDomains *[]string
 	Description    *string
@@ -32,6 +33,10 @@ func NewUseCase(eventRepo repository.EventRepository) *UseCase {
 }
 
 func (uc *UseCase) Execute(ctx context.Context, input *Input) (*Output, error) {
+	if input.UserRole != "admin" {
+		return nil, fmt.Errorf("user not authorized to create event")
+	}
+
 	event, err := entity.NewEvent(entity.NewEventParams{
 		Name:           input.Name,
 		AllowedDomains: input.AllowedDomains,

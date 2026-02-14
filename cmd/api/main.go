@@ -109,8 +109,8 @@ func main() {
 </html>`))
 	})
 
-	identityhttp.RegisterRoutes(router, db.DB, cfg)
-	eventshttp.RegisterRoutes(router, db.DB, cfg, logger)
+	identityhttp.RegisterIdentityRoutes(router, db.DB, cfg)
+	eventshttp.RegisterEventsRoutes(router, db.DB, cfg, logger)
 
 	// Server
 	srv := &http.Server{
