@@ -53,8 +53,7 @@ func (uc *UseCase) Execute(ctx context.Context, input *Input) (*Output, error) {
 	}
 
 	// 3. Verificar se está no horário da atividade
-	now := time.Now()
-	if now.Before(activity.StartDate) || now.After(activity.EndDate) {
+	if !activity.IsCheckInAllowed(time.Now()) {
 		return nil, fmt.Errorf("check-in not allowed outside activity time")
 	}
 

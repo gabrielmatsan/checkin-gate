@@ -56,3 +56,25 @@ func (a *Activity) Update(params NewActivityParams) error {
 	a.touch()
 	return nil
 }
+
+// starttime antes de endtime
+func (a *Activity) IsStartDateBeforeEndDate() bool {
+	return a.StartDate.Before(a.EndDate)
+}
+
+// endtime depois de starttime
+func (a *Activity) IsEndDateAfterStartDate() bool {
+	return a.EndDate.After(a.StartDate)
+}
+
+func (a *Activity) HasStarted() bool {
+	return a.StartDate.Before(time.Now())
+}
+
+func (a *Activity) HasEnded() bool {
+	return a.EndDate.Before(time.Now())
+}
+
+func (a *Activity) IsCheckInAllowed(checkInTime time.Time) bool {
+	return a.HasStarted() && !a.HasEnded()
+}
