@@ -15,6 +15,58 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/activities/{activity_id}/checkin": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Performs a check-in to an activity. User must be authenticated.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "CheckIn"
+                ],
+                "summary": "Check-in to activity",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Activity ID",
+                        "name": "activity_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/handler.CheckInActivityResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Already checked in or outside activity time",
+                        "schema": {
+                            "$ref": "#/definitions/lib.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Activity not found",
+                        "schema": {
+                            "$ref": "#/definitions/lib.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/lib.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/google/callback": {
             "get": {
                 "description": "Exchanges a Google authorization code for access and refresh tokens",
@@ -235,6 +287,58 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/events/{event_id}/details": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Gets an event with all activities and their check-ins. Admin only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Events"
+                ],
+                "summary": "Get event details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.EventDetailsResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "User not authorized",
+                        "schema": {
+                            "$ref": "#/definitions/lib.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Event not found",
+                        "schema": {
+                            "$ref": "#/definitions/lib.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/lib.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -263,6 +367,57 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.ActivityWithCheckInsResponse": {
+            "type": "object",
+            "properties": {
+                "activity_id": {
+                    "type": "string"
+                },
+                "activity_name": {
+                    "type": "string"
+                },
+                "check_ins": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.CheckInResponse"
+                    }
+                }
+            }
+        },
+        "handler.CheckInActivityResponse": {
+            "type": "object",
+            "properties": {
+                "activity_id": {
+                    "type": "string"
+                },
+                "checked_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.CheckInResponse": {
+            "type": "object",
+            "properties": {
+                "activity_id": {
+                    "type": "string"
+                },
+                "checked_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "user_id": {
                     "type": "string"
                 }
             }
@@ -301,6 +456,44 @@ const docTemplate = `{
         "handler.CreateEventResponse": {
             "type": "object",
             "properties": {
+                "allowed_domains": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "start_date": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.EventDetailsResponse": {
+            "type": "object",
+            "properties": {
+                "activities": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.ActivityWithCheckInsResponse"
+                    }
+                },
                 "allowed_domains": {
                     "type": "array",
                     "items": {

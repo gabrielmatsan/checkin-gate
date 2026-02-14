@@ -19,6 +19,39 @@ definitions:
       updated_at:
         type: string
     type: object
+  handler.ActivityWithCheckInsResponse:
+    properties:
+      activity_id:
+        type: string
+      activity_name:
+        type: string
+      check_ins:
+        items:
+          $ref: '#/definitions/handler.CheckInResponse'
+        type: array
+    type: object
+  handler.CheckInActivityResponse:
+    properties:
+      activity_id:
+        type: string
+      checked_at:
+        type: string
+      id:
+        type: string
+      user_id:
+        type: string
+    type: object
+  handler.CheckInResponse:
+    properties:
+      activity_id:
+        type: string
+      checked_at:
+        type: string
+      id:
+        type: string
+      user_id:
+        type: string
+    type: object
   handler.CreateEventRequest:
     properties:
       allowed_domains:
@@ -43,6 +76,31 @@ definitions:
     type: object
   handler.CreateEventResponse:
     properties:
+      allowed_domains:
+        items:
+          type: string
+        type: array
+      created_at:
+        type: string
+      description:
+        type: string
+      end_date:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      start_date:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  handler.EventDetailsResponse:
+    properties:
+      activities:
+        items:
+          $ref: '#/definitions/handler.ActivityWithCheckInsResponse'
+        type: array
       allowed_domains:
         items:
           type: string
@@ -140,6 +198,39 @@ info:
   title: Checkin Gate API
   version: "1.0"
 paths:
+  /activities/{activity_id}/checkin:
+    post:
+      description: Performs a check-in to an activity. User must be authenticated.
+      parameters:
+      - description: Activity ID
+        in: path
+        name: activity_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handler.CheckInActivityResponse'
+        "400":
+          description: Already checked in or outside activity time
+          schema:
+            $ref: '#/definitions/lib.ErrorResponse'
+        "404":
+          description: Activity not found
+          schema:
+            $ref: '#/definitions/lib.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/lib.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Check-in to activity
+      tags:
+      - CheckIn
   /auth/google/callback:
     get:
       description: Exchanges a Google authorization code for access and refresh tokens
@@ -282,6 +373,39 @@ paths:
       security:
       - BearerAuth: []
       summary: Get event with activities
+      tags:
+      - Events
+  /events/{event_id}/details:
+    get:
+      description: Gets an event with all activities and their check-ins. Admin only.
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.EventDetailsResponse'
+        "403":
+          description: User not authorized
+          schema:
+            $ref: '#/definitions/lib.ErrorResponse'
+        "404":
+          description: Event not found
+          schema:
+            $ref: '#/definitions/lib.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/lib.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get event details
       tags:
       - Events
 securityDefinitions:
