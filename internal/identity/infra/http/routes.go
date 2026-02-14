@@ -9,7 +9,6 @@ import (
 	"github.com/gabrielmatsan/checkin-gate/internal/identity/infra/persistence"
 	"github.com/gabrielmatsan/checkin-gate/internal/identity/infra/service"
 	"github.com/gabrielmatsan/checkin-gate/internal/shared/lib"
-	"github.com/gabrielmatsan/checkin-gate/internal/shared/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 )
@@ -33,11 +32,12 @@ func RegisterIdentityRoutes(r chi.Router, db *sqlx.DB, cfg *config.Config) {
 		r.Get("/google/url", getGoogleAuthURLHandler.Handle)
 		r.Get("/google/callback", googleCallbackHandler.Handle)
 
+		r.Post("/refresh", refreshTokenHandler.Handle)
 		// protected routes
-		r.Group(func(r chi.Router) {
-			r.Use(middleware.Auth(middleware.NewValidateTokenFunc(jwtService.ExtractClaims)))
-			r.Post("/refresh", refreshTokenHandler.Handle)
-		})
+		// r.Group(func(r chi.Router) {
+
+		// 	r.Use(middleware.Auth(middleware.NewValidateTokenFunc(jwtService.ExtractClaims)))
+		// })
 	})
 }
 

@@ -61,8 +61,7 @@ func NewCreateEventHandler(logger *zap.Logger, uc *createevent.UseCase) *CreateE
 // @Security     BearerAuth
 // @Router       /events [post]
 func (h *CreateEventHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	role := middleware.GetRole(r.Context())
-
+	userID := middleware.GetUserID(r.Context())
 
 	var req CreateEventRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -82,10 +81,10 @@ func (h *CreateEventHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	input := createEventRequestToInput(&req, role)
+	input := createEventRequestToInput(&req, userID)
 	output, err := h.useCase.Execute(r.Context(), input)
 	if err != nil {
-		if err.Error() == "user not authorized to create event" {
+		if err.Error() == "user is not an admin" {
 			lib.RespondError(w, http.StatusForbidden, err.Error())
 			return
 		}
@@ -98,9 +97,9 @@ func (h *CreateEventHandler) Handle(w http.ResponseWriter, r *http.Request) {
 }
 
 // Mappers (internal to this handler)
-func createEventRequestToInput(req *CreateEventRequest, userRole string) *createevent.Input {
+func createEventRequestToInput(req *CreateEventRequest, userID string) *createevent.Input {
 	return &createevent.Input{
-		UserRole:       userRole,
+		UserID:         userID,
 		Name:           req.Name,
 		AllowedDomains: &req.AllowedDomains,
 		Description:    req.Description,

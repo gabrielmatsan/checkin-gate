@@ -7,10 +7,11 @@ import (
 
 	"github.com/gabrielmatsan/checkin-gate/internal/events/domain/entity"
 	"github.com/gabrielmatsan/checkin-gate/internal/events/domain/repository"
+	"github.com/gabrielmatsan/checkin-gate/internal/events/domain/service"
 )
 
 type Input struct {
-	UserRole       string
+	UserID         string
 	Name           string
 	AllowedDomains *[]string
 	Description    *string
@@ -23,18 +24,30 @@ type Output struct {
 }
 
 type UseCase struct {
-	eventRepo repository.EventRepository
+	eventRepo   repository.EventRepository
+	userAuthSvc service.UserAuthorizationService
 }
 
-func NewUseCase(eventRepo repository.EventRepository) *UseCase {
+func NewUseCase(eventRepo repository.EventRepository, userAuthSvc service.UserAuthorizationService) *UseCase {
 	return &UseCase{
-		eventRepo: eventRepo,
+		eventRepo:   eventRepo,
+		userAuthSvc: userAuthSvc,
 	}
 }
 
 func (uc *UseCase) Execute(ctx context.Context, input *Input) (*Output, error) {
-	if input.UserRole != "admin" {
-		return nil, fmt.Errorf("user not authorized to create event")
+	user, err := uc.userAuthSvc.GetUserByID(ctx, input.UserID)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user by ID: %w", err)
+	}
+
+	if user == nil {
+		return nil, fmt.Errorf("user not found")
+	}
+
+	if !user.IsAdmin {
+		return nil, fmt.Errorf("user is not an admin")
 	}
 
 	event, err := entity.NewEvent(entity.NewEventParams{
