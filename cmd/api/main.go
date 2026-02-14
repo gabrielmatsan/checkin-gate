@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/gabrielmatsan/checkin-gate/internal/config"
-	"github.com/gabrielmatsan/checkin-gate/internal/events"
-	"github.com/gabrielmatsan/checkin-gate/internal/identity"
+	eventshttp "github.com/gabrielmatsan/checkin-gate/internal/events/infra/http"
+	identityhttp "github.com/gabrielmatsan/checkin-gate/internal/identity/infra/http"
 	"github.com/gabrielmatsan/checkin-gate/internal/shared"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -109,8 +109,8 @@ func main() {
 </html>`))
 	})
 
-	identity.RegisterRoutes(router, db.DB, cfg)
-	events.RegisterRoutes(router, db.DB, cfg, logger)
+	identityhttp.RegisterRoutes(router, db.DB, cfg)
+	eventshttp.RegisterRoutes(router, db.DB, cfg, logger)
 
 	// Server
 	srv := &http.Server{
