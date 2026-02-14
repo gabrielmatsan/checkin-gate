@@ -101,3 +101,24 @@ func (r *PostgresCheckInRepository) FindByID(ctx context.Context, id string) (*e
 
 	return &row, nil
 }
+
+func (r *PostgresCheckInRepository) FindByUserAndActivity(ctx context.Context, userID, activityID string) (*entity.CheckIn, error) {
+	query, args, err := psql.
+		Select("id", "user_id", "activity_id", "checked_at").
+		From("check_ins").
+		Where(sq.Eq{"user_id": userID, "activity_id": activityID}).
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	var row entity.CheckIn
+	if err := r.db.GetContext(ctx, &row, query, args...); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &row, nil
+}

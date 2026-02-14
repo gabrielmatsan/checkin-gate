@@ -6,6 +6,10 @@ import (
 	"github.com/gabrielmatsan/checkin-gate/internal/events/domain/entity"
 )
 
+type ActivityWithEvent struct {
+	Event    *entity.Event
+	Activity *entity.Activity
+}
 type ActivityRepository interface {
 	Save(ctx context.Context, activity *entity.Activity) (*entity.Activity, error)
 	SaveAll(ctx context.Context, activities []*entity.Activity) ([]*entity.Activity, error)
@@ -15,4 +19,5 @@ type ActivityRepository interface {
 	FindAll(ctx context.Context) ([]*entity.Activity, error)
 	Update(ctx context.Context, activity *entity.Activity) (*entity.Activity, error)
 	Delete(ctx context.Context, id string) error
+	FindByActivityIDWithEvent(ctx context.Context, activityID string) (*ActivityWithEvent, error)
 }

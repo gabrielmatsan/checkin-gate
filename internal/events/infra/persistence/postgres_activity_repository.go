@@ -4,10 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gabrielmatsan/checkin-gate/internal/events/domain/entity"
+	"github.com/gabrielmatsan/checkin-gate/internal/events/domain/repository"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 type PostgresActivityRepository struct {
@@ -196,3 +199,71 @@ func (r *PostgresActivityRepository) Delete(ctx context.Context, id string) erro
 	_, err = r.db.ExecContext(ctx, query, args...)
 	return err
 }
+
+
+func (r *PostgresActivityRepository) FindByActivityIDWithEvent(ctx context.Context, activityID string) (*repository.ActivityWithEvent, error) {
+	// Struct para scan do JOIN
+	var row struct {
+		// Activity fields
+		ID          string     `db:"id"`
+		Name        string     `db:"name"`
+		EventID     string     `db:"event_id"`
+		Description *string    `db:"description"`
+		StartDate   time.Time  `db:"start_date"`
+		EndDate     time.Time  `db:"end_date"`
+		CreatedAt   time.Time  `db:"created_at"`
+		UpdatedAt   *time.Time `db:"updated_at"`
+		// Event fields
+		EventName           string         `db:"event_name"`
+		EventAllowedDomains pq.StringArray `db:"event_allowed_domains"`
+		EventDescription    *string        `db:"event_description"`
+		EventStartDate      time.Time      `db:"event_start_date"`
+		EventEndDate        time.Time      `db:"event_end_date"`
+		EventCreatedAt      time.Time      `db:"event_created_at"`
+		EventUpdatedAt      *time.Time     `db:"event_updated_at"`
+	}
+
+	query, args, err := psql.
+		Select(
+			"a.id", "a.name", "a.event_id", "a.description", "a.start_date", "a.end_date", "a.created_at", "a.updated_at",
+			"e.name AS event_name", "e.allowed_domains AS event_allowed_domains", "e.description AS event_description",
+			"e.start_date AS event_start_date", "e.end_date AS event_end_date", "e.created_at AS event_created_at", "e.updated_at AS event_updated_at",
+		).
+		From("activities a").
+		InnerJoin("events e ON a.event_id = e.id").
+		Where(sq.Eq{"a.id": activityID}).
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := r.db.GetContext(ctx, &row, query, args...); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &repository.ActivityWithEvent{
+		Activity: &entity.Activity{
+			ID:          row.ID,
+			Name:        row.Name,
+			EventID:     row.EventID,
+			Description: row.Description,
+			StartDate:   row.StartDate,
+			EndDate:     row.EndDate,
+			CreatedAt:   row.CreatedAt,
+			UpdatedAt:   row.UpdatedAt,
+		},
+		Event: &entity.Event{
+			ID:             row.EventID,
+			Name:           row.EventName,
+			AllowedDomains: row.EventAllowedDomains,
+			Description:    row.EventDescription,
+			StartDate:      row.EventStartDate,
+			EndDate:        row.EventEndDate,
+			CreatedAt:      row.EventCreatedAt,
+			UpdatedAt:      row.EventUpdatedAt,
+		},
+	}, nil
+} 
