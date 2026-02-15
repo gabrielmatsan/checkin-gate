@@ -43,6 +43,13 @@ func main() {
 		logger.Fatal("failed to load config", zap.Error(err))
 	}
 
+	// Redis
+	redis, err := shared.NewRedis(cfg.RedisURL, logger)
+	if err != nil {
+		logger.Fatal("failed to connect to redis", zap.Error(err))
+	}
+	defer redis.Close()
+
 	// Database
 	db, err := shared.NewDatabase(cfg.DatabaseURL, logger)
 	if err != nil {
