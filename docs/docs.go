@@ -17,11 +17,6 @@ const docTemplate = `{
     "paths": {
         "/activities/{activity_id}/checkin": {
             "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
                 "description": "Performs a check-in to an activity. User must be authenticated.",
                 "produces": [
                     "application/json"
@@ -172,11 +167,6 @@ const docTemplate = `{
         },
         "/events": {
             "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
                 "description": "Creates a new event. Only admins can create events.",
                 "consumes": [
                     "application/json"
@@ -233,13 +223,57 @@ const docTemplate = `{
                 }
             }
         },
-        "/events/{event_id}/activities": {
-            "get": {
-                "security": [
+        "/events/activities": {
+            "post": {
+                "description": "Creates one or more activities for an event. User must be authenticated.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Activities"
+                ],
+                "summary": "Create activities",
+                "parameters": [
                     {
-                        "BearerAuth": []
+                        "description": "Activities to create",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateActivitiesRequest"
+                        }
                     }
                 ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/handler.CreateActivityResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or validation error",
+                        "schema": {
+                            "$ref": "#/definitions/lib.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/lib.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/activities": {
+            "get": {
                 "description": "Gets an event with its activities.",
                 "consumes": [
                     "application/json"
@@ -290,11 +324,6 @@ const docTemplate = `{
         },
         "/events/{event_id}/details": {
             "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
                 "description": "Gets an event with all activities and their check-ins. Admin only.",
                 "produces": [
                     "application/json"
@@ -418,6 +447,75 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.CreateActivitiesRequest": {
+            "type": "object",
+            "required": [
+                "activities",
+                "event_id"
+            ],
+            "properties": {
+                "activities": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.CreateActivityItem"
+                    }
+                },
+                "event_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.CreateActivityItem": {
+            "type": "object",
+            "required": [
+                "end_date",
+                "name",
+                "start_date"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "start_date": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.CreateActivityResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "event_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "start_date": {
+                    "type": "string"
+                },
+                "updated_at": {
                     "type": "string"
                 }
             }
@@ -632,14 +730,6 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
-        }
-    },
-    "securityDefinitions": {
-        "BearerAuth": {
-            "description": "Bearer token JWT",
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
         }
     }
 }`

@@ -52,6 +52,52 @@ definitions:
       user_id:
         type: string
     type: object
+  handler.CreateActivitiesRequest:
+    properties:
+      activities:
+        items:
+          $ref: '#/definitions/handler.CreateActivityItem'
+        type: array
+      event_id:
+        type: string
+    required:
+    - activities
+    - event_id
+    type: object
+  handler.CreateActivityItem:
+    properties:
+      description:
+        type: string
+      end_date:
+        type: string
+      name:
+        type: string
+      start_date:
+        type: string
+    required:
+    - end_date
+    - name
+    - start_date
+    type: object
+  handler.CreateActivityResponse:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      end_date:
+        type: string
+      event_id:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      start_date:
+        type: string
+      updated_at:
+        type: string
+    type: object
   handler.CreateEventRequest:
     properties:
       allowed_domains:
@@ -226,8 +272,6 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/lib.ErrorResponse'
-      security:
-      - BearerAuth: []
       summary: Check-in to activity
       tags:
       - CheckIn
@@ -335,8 +379,6 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/lib.ErrorResponse'
-      security:
-      - BearerAuth: []
       summary: Create event
       tags:
       - Events
@@ -370,8 +412,6 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/lib.ErrorResponse'
-      security:
-      - BearerAuth: []
       summary: Get event with activities
       tags:
       - Events
@@ -403,15 +443,39 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/lib.ErrorResponse'
-      security:
-      - BearerAuth: []
       summary: Get event details
       tags:
       - Events
-securityDefinitions:
-  BearerAuth:
-    description: Bearer token JWT
-    in: header
-    name: Authorization
-    type: apiKey
+  /events/activities:
+    post:
+      consumes:
+      - application/json
+      description: Creates one or more activities for an event. User must be authenticated.
+      parameters:
+      - description: Activities to create
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateActivitiesRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            items:
+              $ref: '#/definitions/handler.CreateActivityResponse'
+            type: array
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/lib.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/lib.ErrorResponse'
+      summary: Create activities
+      tags:
+      - Activities
 swagger: "2.0"
