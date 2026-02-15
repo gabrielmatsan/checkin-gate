@@ -3,6 +3,7 @@ package http
 import (
 	"github.com/gabrielmatsan/checkin-gate/internal/config"
 	checkinactivity "github.com/gabrielmatsan/checkin-gate/internal/events/application/usecase/checkin_activity"
+	createactivities "github.com/gabrielmatsan/checkin-gate/internal/events/application/usecase/create_activities"
 	createevent "github.com/gabrielmatsan/checkin-gate/internal/events/application/usecase/create_event"
 	geteventdetails "github.com/gabrielmatsan/checkin-gate/internal/events/application/usecase/get_event_details"
 	geteventwithactivities "github.com/gabrielmatsan/checkin-gate/internal/events/application/usecase/get_event_with_activities"
@@ -28,12 +29,14 @@ func RegisterEventsRoutes(r chi.Router, db *sqlx.DB, cfg *config.Config, logger 
 	userAuthSvc := eventsvc.NewUserAuthorizationAdapter(userRepo)
 
 	createEvent := createevent.NewUseCase(eventRepo, userAuthSvc)
+	createActivities := createactivities.NewUseCase(activityRepo, eventRepo, userAuthSvc)
 	getEventWithActivities := geteventwithactivities.NewUseCase(eventRepo, activityRepo)
 	getEventDetails := geteventdetails.NewUseCase(eventRepo)
-	checkInActivity := checkinactivity.NewUseCase(checkInRepo, activityRepo)
+	checkInActivity := checkinactivity.NewUseCase(checkInRepo, activityRepo, eventRepo, userAuthSvc)
 
 	// Create individual handlers
 	createEventHandler := handler.NewCreateEventHandler(logger, createEvent)
+	createActivitiesHandler := handler.NewCreateActivitiesHandler(logger, createActivities)
 	getEventWithActivitiesHandler := handler.NewGetEventWithActivitiesHandler(getEventWithActivities)
 	getEventDetailsHandler := handler.NewGetEventDetailsHandler(getEventDetails)
 	checkInActivityHandler := handler.NewCheckInActivityHandler(checkInActivity)
@@ -44,6 +47,7 @@ func RegisterEventsRoutes(r chi.Router, db *sqlx.DB, cfg *config.Config, logger 
 			r.Use(middleware.Auth(middleware.NewValidateTokenFunc(jwtService.ExtractClaims)))
 
 			r.Post("/", createEventHandler.Handle)
+			r.Post("/activities", createActivitiesHandler.Handle)
 			r.Get("/{event_id}/activities", getEventWithActivitiesHandler.Handle)
 			r.Get("/{event_id}/details", getEventDetailsHandler.Handle)
 		})

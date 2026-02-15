@@ -2,6 +2,7 @@ package entity
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gabrielmatsan/checkin-gate/internal/shared/lib"
@@ -55,7 +56,13 @@ func (e *Event) touch() {
 }
 
 // verifica se o dominio passado é valido
-func (e *Event) IsAllowedDomain(domain string) bool {
+// se AllowedDomains for nulo ou vazio, permite todos os domínios
+func (e *Event) IsAllowedDomain(email string) bool {
+	if len(e.AllowedDomains) == 0 {
+		return true
+	}
+
+	domain := extractDomain(email)
 	for _, allowedDomain := range e.AllowedDomains {
 		if allowedDomain == domain {
 			return true
@@ -77,4 +84,12 @@ func (e *Event) IsStartDateBeforeEndDate() bool {
 // verifica se a data de fim é depois da data de inicio
 func (e *Event) IsEndDateAfterStartDate() bool {
 	return e.EndDate.After(e.StartDate)
+}
+
+func extractDomain(email string) string {
+	parts := strings.Split(email, "@")
+	if len(parts) != 2 {
+		return ""
+	}
+	return parts[1]
 }

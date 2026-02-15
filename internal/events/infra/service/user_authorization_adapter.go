@@ -41,3 +41,14 @@ func (a *UserAuthorizationAdapter) IsUserAdmin(ctx context.Context, userID strin
 	}
 	return user.IsAdmin(), nil
 }
+
+func (a *UserAuthorizationAdapter) GetUserEmail(ctx context.Context, userID string) (string, error) {
+	user, err := a.userRepo.FindByID(ctx, userID)
+	if err != nil {
+		return "", err
+	}
+	if user == nil {
+		return "", nil
+	}
+	return user.Email, nil
+}

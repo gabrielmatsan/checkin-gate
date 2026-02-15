@@ -29,11 +29,6 @@ import (
 // @host      localhost:8080
 // @BasePath  /
 
-// @securityDefinitions.apikey BearerAuth
-// @in header
-// @name Authorization
-// @description Bearer token JWT
-
 func main() {
 	// Logger
 	logger, err := zap.NewProduction()

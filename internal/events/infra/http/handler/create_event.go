@@ -58,7 +58,6 @@ func NewCreateEventHandler(logger *zap.Logger, uc *createevent.UseCase) *CreateE
 // @Failure      401   {object}  lib.ErrorResponse  "Unauthorized"
 // @Failure      403   {object}  lib.ErrorResponse  "User not authorized to create event"
 // @Failure      500   {object}  lib.ErrorResponse  "Internal server error"
-// @Security     BearerAuth
 // @Router       /events [post]
 func (h *CreateEventHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())

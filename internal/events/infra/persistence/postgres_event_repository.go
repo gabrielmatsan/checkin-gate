@@ -131,41 +131,35 @@ func (r *PostgresEventRepository) FindByIDWithActivitiesAndCheckIns(ctx context.
 
 	query := `
 		SELECT
-				e.*,
-				COALESCE(
-						json_agg(
+			e.*,
+			COALESCE(
+				json_agg(
+					json_build_object(
+						'activity_id', a.id,
+						'activity_name', a.name,
+						'check_ins', (
+							SELECT COALESCE(json_agg(
 								json_build_object(
-										'activity_id', a.id,
-										'activity_name', a.name,
-										'check_ins', (
-												SELECT COALESCE(json_agg(
-														json_build_object(
-																'id', c.id,
-																'user_id', c.user_id,
-																'activity_id', c.activity_id,
-																'checked_at', c.checked_at
-														)
-												), '[]'::json)
-												FROM check_ins c
-												WHERE c.activity_id = a.id
-										)
+									'id', c.id,
+									'user_id', c.user_id,
+									'activity_id', c.activity_id,
+									'checked_at', c.checked_at
 								)
-						) FILTER (WHERE a.id IS NOT NULL),
-						'[]'::json
-				) AS activities
+							), '[]'::json)
+							FROM check_ins c
+							WHERE c.activity_id = a.id
+						)
+					)
+				) FILTER (WHERE a.id IS NOT NULL),
+				'[]'::json
+			) AS activities
 		FROM events e
 		LEFT JOIN activities a ON a.event_id = e.id
-		WHERE e.id = :event_id
+		WHERE e.id = $1
 		GROUP BY e.id
 	`
 
-	nstmt, err := r.db.PrepareNamedContext(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-	defer nstmt.Close()
-
-	if err := nstmt.GetContext(ctx, &row, map[string]interface{}{"event_id": eventID}); err != nil {
+	if err := r.db.GetContext(ctx, &row, query, eventID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}

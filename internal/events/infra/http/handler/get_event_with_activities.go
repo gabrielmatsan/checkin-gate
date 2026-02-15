@@ -58,7 +58,6 @@ func NewGetEventWithActivitiesHandler(uc *geteventwithactivities.UseCase) *GetEv
 // @Failure      400   {object}  lib.ErrorResponse  "Invalid request body or validation error"
 // @Failure      404   {object}  lib.ErrorResponse  "Event not found"
 // @Failure      500   {object}  lib.ErrorResponse  "Internal server error"
-// @Security     BearerAuth
 // @Router       /events/{event_id}/activities [get]
 func (h *GetEventWithActivitiesHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	eventID := chi.URLParam(r, "event_id")

@@ -17,6 +17,7 @@ run:
 	go run cmd/api/main.go
 
 dev:
+	make swagger
 	$(shell go env GOPATH)/bin/air
 
 migrate-up:

@@ -37,7 +37,6 @@ func NewCheckInActivityHandler(uc *checkinactivity.UseCase) *CheckInActivityHand
 // @Failure      400   {object}  lib.ErrorResponse  "Already checked in or outside activity time"
 // @Failure      404   {object}  lib.ErrorResponse  "Activity not found"
 // @Failure      500   {object}  lib.ErrorResponse  "Internal server error"
-// @Security     BearerAuth
 // @Router       /activities/{activity_id}/checkin [post]
 func (h *CheckInActivityHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	activityID := chi.URLParam(r, "activity_id")

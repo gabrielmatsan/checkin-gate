@@ -44,6 +44,17 @@ func NewCreateActivitiesHandler(logger *zap.Logger, uc *createactivities.UseCase
 	return &CreateActivitiesHandler{logger: logger, useCase: uc}
 }
 
+// Handle creates activities for an event.
+// @Summary      Create activities
+// @Description  Creates one or more activities for an event. User must be authenticated.
+// @Tags         Activities
+// @Accept       json
+// @Produce      json
+// @Param        request  body      CreateActivitiesRequest  true  "Activities to create"
+// @Success      201      {array}   CreateActivityResponse
+// @Failure      400      {object}  lib.ErrorResponse  "Invalid request body or validation error"
+// @Failure      500      {object}  lib.ErrorResponse  "Internal server error"
+// @Router       /events/activities [post]
 func (h *CreateActivitiesHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
