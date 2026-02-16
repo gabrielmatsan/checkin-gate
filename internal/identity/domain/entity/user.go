@@ -34,6 +34,7 @@ func NewUser(params NewUserParams) *User {
 		Email:     params.Email,
 		Role:      UserRoleUser,
 		CreatedAt: time.Now(),
+		UpdatedAt: nil,
 	}
 }
 

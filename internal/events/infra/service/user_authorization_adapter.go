@@ -26,8 +26,11 @@ func (a *UserAuthorizationAdapter) GetUserByID(ctx context.Context, userID strin
 		return nil, nil
 	}
 	return &service.UserInfo{
-		ID:      user.ID,
-		IsAdmin: user.IsAdmin(),
+		ID:        user.ID,
+		IsAdmin:   user.IsAdmin(),
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		Email:     user.Email,
 	}, nil
 }
 
@@ -51,4 +54,22 @@ func (a *UserAuthorizationAdapter) GetUserEmail(ctx context.Context, userID stri
 		return "", nil
 	}
 	return user.Email, nil
+}
+
+func (a *UserAuthorizationAdapter) GetUserInfoBatch(ctx context.Context, userIDs []string) ([]*service.UserInfo, error) {
+	users, err := a.userRepo.FindByIDs(ctx, userIDs)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*service.UserInfo, len(users))
+	for i, user := range users {
+		result[i] = &service.UserInfo{
+			ID:        user.ID,
+			IsAdmin:   user.IsAdmin(),
+			FirstName: user.FirstName,
+			LastName:  user.LastName,
+			Email:     user.Email,
+		}
+	}
+	return result, nil
 }
