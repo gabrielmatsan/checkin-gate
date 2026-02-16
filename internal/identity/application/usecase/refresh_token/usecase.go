@@ -57,7 +57,9 @@ func (uc *UseCase) Execute(ctx context.Context, input *Input) (*Output, error) {
 
 	// 2. Check if expired
 	if session.IsExpired() {
-		uc.sessionRepo.Delete(ctx, session.ID)
+		if err := uc.sessionRepo.Delete(ctx, session.ID); err != nil {
+			return nil, err
+		}
 		return nil, ErrSessionExpired
 	}
 
@@ -89,7 +91,9 @@ func (uc *UseCase) Execute(ctx context.Context, input *Input) (*Output, error) {
 	}
 
 	// Delete old session and create new one (rotation)
-	uc.sessionRepo.Delete(ctx, session.ID)
+	if err := uc.sessionRepo.Delete(ctx, session.ID); err != nil {
+		return nil, err
+	}
 
 	newSession := entity.NewSession(
 		newSessionID,
