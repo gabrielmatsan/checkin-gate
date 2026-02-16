@@ -93,15 +93,16 @@ func main() {
 		}
 	})
 
-	// Swagger JSON (necessário para o Scalar)
-	router.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("/swagger/doc.json"),
-	))
+	// Swagger apenas em desenvolvimento
+	if cfg.Env == config.Development {
+		router.Get("/swagger/*", httpSwagger.Handler(
+			httpSwagger.URL("/swagger/doc.json"),
+		))
 
-	// Scalar - documentação moderna da API
-	router.Get("/docs", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/html")
-		if _, err := w.Write([]byte(`<!DOCTYPE html>
+		// Scalar - documentação moderna da API,
+		router.Get("/docs", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "text/html")
+			if _, err := w.Write([]byte(`<!DOCTYPE html>
 <html>
 <head>
     <title>Checkin Gate API</title>
@@ -127,9 +128,11 @@ func main() {
     <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
 </body>
 </html>`)); err != nil {
-			http.Error(w, "failed to write response", http.StatusInternalServerError)
-		}
-	})
+				http.Error(w, "failed to write response", http.StatusInternalServerError)
+			}
+		})
+
+	}
 
 	identityhttp.RegisterIdentityRoutes(router, db.DB, cfg)
 	eventshttp.RegisterEventsRoutes(router, db.DB, redis.Client, cfg, logger)
