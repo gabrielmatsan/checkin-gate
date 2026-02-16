@@ -17,7 +17,9 @@ type Config struct {
 	GoogleClientID     string      `env:"GOOGLE_CLIENT_ID,required"`
 	GoogleClientSecret string      `env:"GOOGLE_CLIENT_SECRET,required"`
 	GoogleRedirectURL  string      `env:"GOOGLE_REDIRECT_URL" envDefault:"http://localhost:8080/auth/google/callback"`
-	RedisURL           string      `env:"REDIS_URL,required"`
+	RedisURL   string `env:"REDIS_URL,required"`
+	ResendKey  string `env:"RESEND_KEY,required"`
+	ResendFrom string `env:"RESEND_FROM" envDefault:"gabriel@laboratorio-de-pesquisa-de-engenharia-de-software.com"`
 }
 
 func Load() (*Config, error) {

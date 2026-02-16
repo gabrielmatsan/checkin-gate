@@ -12,10 +12,12 @@ import (
 
 	"github.com/gabrielmatsan/checkin-gate/internal/config"
 	eventshttp "github.com/gabrielmatsan/checkin-gate/internal/events/infra/http"
+	"github.com/gabrielmatsan/checkin-gate/internal/events/infra/pdf"
 	infraqueue "github.com/gabrielmatsan/checkin-gate/internal/events/infra/queue"
 	"github.com/gabrielmatsan/checkin-gate/internal/events/infra/worker"
 	identityhttp "github.com/gabrielmatsan/checkin-gate/internal/identity/infra/http"
 	"github.com/gabrielmatsan/checkin-gate/internal/shared"
+	"github.com/gabrielmatsan/checkin-gate/internal/shared/mail"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
@@ -136,8 +138,14 @@ func main() {
 	workerCtx, workerCancel := context.WithCancel(context.Background())
 	defer workerCancel()
 
+	certificateGenerator := pdf.NewMarotoGenerator()
+
+	// Email service (Resend)
+	emailService := mail.NewResendService(cfg.ResendKey, cfg.ResendFrom)
+	logger.Info("email service configured", zap.String("from", cfg.ResendFrom))
+
 	certificateQueue := infraqueue.NewRedisCertificateQueue(redis.Client)
-	certificateWorker := worker.NewCertificateWorker(certificateQueue, logger)
+	certificateWorker := worker.NewCertificateWorker(certificateQueue, certificateGenerator, emailService, logger)
 	go func() {
 		if err := certificateWorker.Start(workerCtx); err != nil {
 			logger.Error("certificate worker failed", zap.Error(err))
