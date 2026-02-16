@@ -111,3 +111,25 @@ func (r *PostgresUserRepository) Delete(ctx context.Context, id string) error {
 	_, err = r.db.ExecContext(ctx, query, args...)
 	return err
 }
+
+func (r *PostgresUserRepository) FindByIDs(ctx context.Context, ids []string) ([]*entity.User, error) {
+	query, args, err := psql.
+		Select("id", "first_name", "last_name", "email", "role", "created_at", "updated_at").
+		From("users").
+		Where(sq.Eq{"id": ids}).
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	var rows []entity.User
+	if err := r.db.SelectContext(ctx, &rows, query, args...); err != nil {
+		return nil, err
+	}
+
+	result := make([]*entity.User, len(rows))
+	for i := range rows {
+		result[i] = &rows[i]
+	}
+	return result, nil
+}

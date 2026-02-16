@@ -122,3 +122,26 @@ func (r *PostgresCheckInRepository) FindByUserAndActivity(ctx context.Context, u
 
 	return &row, nil
 }
+
+func (r *PostgresCheckInRepository) FindByActivityIDs(ctx context.Context, activityIDs []string) ([]*entity.CheckIn, error) {
+	query, args, err := psql.
+		Select("id", "user_id", "activity_id", "checked_at").
+		From("check_ins").
+		Where(sq.Eq{"activity_id": activityIDs}).
+		ToSql()
+
+	if err != nil {
+		return nil, err
+	}
+
+	var rows []entity.CheckIn
+	if err := r.db.SelectContext(ctx, &rows, query, args...); err != nil {
+		return nil, err
+	}
+
+	result := make([]*entity.CheckIn, len(rows))
+	for i := range rows {
+		result[i] = &rows[i]
+	}
+	return result, nil
+}
