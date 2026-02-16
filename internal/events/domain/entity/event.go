@@ -9,6 +9,16 @@ import (
 	"github.com/lib/pq"
 )
 
+// Enum status do evento
+type EventStatus string
+
+const (
+	EventStatusDraft     EventStatus = "draft"
+	EventStatusPublished EventStatus = "published"
+	EventStatusCancelled EventStatus = "cancelled"
+	EventStatusCompleted EventStatus = "completed"
+)
+
 type Event struct {
 	ID             string         `db:"id"`
 	Name           string         `db:"name"`
@@ -18,6 +28,7 @@ type Event struct {
 	EndDate        time.Time      `db:"end_date"`
 	CreatedAt      time.Time      `db:"created_at"`
 	UpdatedAt      *time.Time     `db:"updated_at"`
+	Status         EventStatus    `db:"status"`
 }
 
 type NewEventParams struct {
@@ -48,6 +59,7 @@ func NewEvent(params NewEventParams) (*Event, error) {
 		EndDate:        params.EndDate,
 		CreatedAt:      time.Now(),
 		UpdatedAt:      nil,
+		Status:         EventStatusDraft,
 	}, nil
 }
 

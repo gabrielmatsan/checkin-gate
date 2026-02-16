@@ -200,7 +200,6 @@ func (r *PostgresActivityRepository) Delete(ctx context.Context, id string) erro
 	return err
 }
 
-
 func (r *PostgresActivityRepository) FindByActivityIDWithEvent(ctx context.Context, activityID string) (*repository.ActivityWithEvent, error) {
 	// Struct para scan do JOIN
 	var row struct {
@@ -215,6 +214,7 @@ func (r *PostgresActivityRepository) FindByActivityIDWithEvent(ctx context.Conte
 		UpdatedAt   *time.Time `db:"updated_at"`
 		// Event fields
 		EventName           string         `db:"event_name"`
+		EventStatus         string         `db:"event_status"`
 		EventAllowedDomains pq.StringArray `db:"event_allowed_domains"`
 		EventDescription    *string        `db:"event_description"`
 		EventStartDate      time.Time      `db:"event_start_date"`
@@ -225,8 +225,18 @@ func (r *PostgresActivityRepository) FindByActivityIDWithEvent(ctx context.Conte
 
 	query, args, err := psql.
 		Select(
-			"a.id", "a.name", "a.event_id", "a.description", "a.start_date", "a.end_date", "a.created_at", "a.updated_at",
-			"e.name AS event_name", "e.allowed_domains AS event_allowed_domains", "e.description AS event_description",
+			"a.id",
+			"a.name",
+			"a.event_id",
+			"a.description",
+			"a.start_date",
+			"a.end_date",
+			"a.created_at",
+			"a.updated_at",
+			"e.name AS event_name",
+			"e.allowed_domains AS event_allowed_domains",
+			"e.description AS event_description",
+			"e.status AS event_status",
 			"e.start_date AS event_start_date", "e.end_date AS event_end_date", "e.created_at AS event_created_at", "e.updated_at AS event_updated_at",
 		).
 		From("activities a").
@@ -258,6 +268,7 @@ func (r *PostgresActivityRepository) FindByActivityIDWithEvent(ctx context.Conte
 		Event: &entity.Event{
 			ID:             row.EventID,
 			Name:           row.EventName,
+			Status:         entity.EventStatus(row.EventStatus),
 			AllowedDomains: row.EventAllowedDomains,
 			Description:    row.EventDescription,
 			StartDate:      row.EventStartDate,
@@ -266,4 +277,4 @@ func (r *PostgresActivityRepository) FindByActivityIDWithEvent(ctx context.Conte
 			UpdatedAt:      row.EventUpdatedAt,
 		},
 	}, nil
-} 
+}
