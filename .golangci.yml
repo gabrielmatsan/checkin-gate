@@ -1,0 +1,14 @@
+version: "2"
+
+linters:
+  enable:
+    - exhaustruct
+  settings:
+    exhaustruct:
+      include:
+        - 'github\.com/gabrielmatsan/checkin-gate/.*'
+      exclude:
+        # Preenchido via env.Parse (reflection)
+        - 'github\.com/gabrielmatsan/checkin-gate/internal/config\.Config'
+        # Usado como template para jwt.ParseWithClaims (preenchido pelo parser)
+        - 'github\.com/gabrielmatsan/checkin-gate/internal/identity/infra/service\.Claims'

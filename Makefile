@@ -2,19 +2,26 @@ include .env
 export
 
 MIGRATIONS_PATH = ./migrations
-.PHONY: setup run dev swagger migrate-up migrate-down migrate-force migrate-create migrate-version
+.PHONY: setup run dev worker swagger lint migrate-up migrate-down migrate-force migrate-create migrate-version
 
 setup:
 	go mod download
 	go install github.com/air-verse/air@latest
 	go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 	go install github.com/swaggo/swag/cmd/swag@latest
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+
+lint:
+	golangci-lint run ./...
 
 swagger:
 	$(shell go env GOPATH)/bin/swag init -g cmd/api/main.go -o docs
 
 run:
 	go run cmd/api/main.go
+
+worker:
+	go run cmd/worker/main.go
 
 dev:
 	make swagger
