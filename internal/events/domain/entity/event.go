@@ -47,13 +47,14 @@ func NewEvent(params NewEventParams) (*Event, error) {
 		StartDate:      params.StartDate,
 		EndDate:        params.EndDate,
 		CreatedAt:      time.Now(),
+		UpdatedAt:      nil,
 	}, nil
 }
 
-func (e *Event) touch() {
-	now := time.Now()
-	e.UpdatedAt = &now
-}
+// func (e *Event) touch() {
+// 	now := time.Now()
+// 	e.UpdatedAt = &now
+// }
 
 // verifica se o dominio passado é valido
 // se AllowedDomains for nulo ou vazio, permite todos os domínios

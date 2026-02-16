@@ -40,6 +40,7 @@ func NewActivity(params NewActivityParams) (*Activity, error) {
 		StartDate:   params.StartDate,
 		EndDate:     params.EndDate,
 		CreatedAt:   time.Now(),
+		UpdatedAt:   nil,
 	}, nil
 }
 
