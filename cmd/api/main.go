@@ -12,6 +12,8 @@ import (
 
 	"github.com/gabrielmatsan/checkin-gate/internal/config"
 	eventshttp "github.com/gabrielmatsan/checkin-gate/internal/events/infra/http"
+	infraqueue "github.com/gabrielmatsan/checkin-gate/internal/events/infra/queue"
+	"github.com/gabrielmatsan/checkin-gate/internal/events/infra/worker"
 	identityhttp "github.com/gabrielmatsan/checkin-gate/internal/identity/infra/http"
 	"github.com/gabrielmatsan/checkin-gate/internal/shared"
 	"github.com/go-chi/chi/v5"
@@ -35,7 +37,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer logger.Sync()
+	defer func() {
+		if err := logger.Sync(); err != nil {
+			fmt.Printf("failed to sync logger: %v\n", err)
+		}
+	}()
 
 	// Config
 	cfg, err := config.Load()
@@ -48,14 +54,22 @@ func main() {
 	if err != nil {
 		logger.Fatal("failed to connect to redis", zap.Error(err))
 	}
-	defer redis.Close()
+	defer func() {
+		if err := redis.Close(); err != nil {
+			logger.Error("failed to close redis", zap.Error(err))
+		}
+	}()
 
 	// Database
 	db, err := shared.NewDatabase(cfg.DatabaseURL, logger)
 	if err != nil {
 		logger.Fatal("failed to connect to database", zap.Error(err))
 	}
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			logger.Error("failed to close database", zap.Error(err))
+		}
+	}()
 
 	// Health check
 	if err := db.HealthCheck(); err != nil {
@@ -72,7 +86,9 @@ func main() {
 	// Routes
 	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+		if err := json.NewEncoder(w).Encode(map[string]string{"status": "ok"}); err != nil {
+			http.Error(w, "failed to encode response", http.StatusInternalServerError)
+		}
 	})
 
 	// Swagger JSON (necessário para o Scalar)
@@ -83,7 +99,7 @@ func main() {
 	// Scalar - documentação moderna da API
 	router.Get("/docs", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte(`<!DOCTYPE html>
+		if _, err := w.Write([]byte(`<!DOCTYPE html>
 <html>
 <head>
     <title>Checkin Gate API</title>
@@ -108,11 +124,25 @@ func main() {
     }'></script>
     <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
 </body>
-</html>`))
+</html>`)); err != nil {
+			http.Error(w, "failed to write response", http.StatusInternalServerError)
+		}
 	})
 
 	identityhttp.RegisterIdentityRoutes(router, db.DB, cfg)
-	eventshttp.RegisterEventsRoutes(router, db.DB, cfg, logger)
+	eventshttp.RegisterEventsRoutes(router, db.DB, redis.Client, cfg, logger)
+
+	// Certificate worker
+	workerCtx, workerCancel := context.WithCancel(context.Background())
+	defer workerCancel()
+
+	certificateQueue := infraqueue.NewRedisCertificateQueue(redis.Client)
+	certificateWorker := worker.NewCertificateWorker(certificateQueue, logger)
+	go func() {
+		if err := certificateWorker.Start(workerCtx); err != nil {
+			logger.Error("certificate worker failed", zap.Error(err))
+		}
+	}()
 
 	// Server
 	srv := &http.Server{
@@ -146,6 +176,8 @@ func main() {
 	<-quit
 
 	logger.Info("shutting down server")
+
+	workerCancel()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

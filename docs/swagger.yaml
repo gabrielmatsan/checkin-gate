@@ -446,6 +446,44 @@ paths:
       summary: Get event details
       tags:
       - Events
+  /events/{event_id}/finish:
+    post:
+      description: Finishes an event and enqueues certificate generation jobs for
+        all check-ins. Admin only.
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Jobs enqueued
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Activities not ended or no check-ins
+          schema:
+            $ref: '#/definitions/lib.ErrorResponse'
+        "403":
+          description: User is not an admin
+          schema:
+            $ref: '#/definitions/lib.ErrorResponse'
+        "404":
+          description: Event not found
+          schema:
+            $ref: '#/definitions/lib.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/lib.ErrorResponse'
+      summary: Finish event
+      tags:
+      - Events
   /events/activities:
     post:
       consumes:
