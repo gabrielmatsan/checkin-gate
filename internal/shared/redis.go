@@ -25,7 +25,7 @@ func NewRedis(redisURL string, logger *zap.Logger) (*Redis, error) {
 	opts.MinIdleConns = 5
 	opts.MaxRetries = 3
 	opts.DialTimeout = 5 * time.Second
-	opts.ReadTimeout = 3 * time.Second
+	opts.ReadTimeout = 10 * time.Second
 	opts.WriteTimeout = 3 * time.Second
 
 	client := redis.NewClient(opts)
