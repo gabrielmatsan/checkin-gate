@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -21,7 +22,7 @@ func Validate(s any) error {
 			messages = append(messages, fmt.Sprintf("%s is %s", fe.Field(), fe.Tag()))
 		}
 
-		return fmt.Errorf(strings.Join(messages, ", "))
+		return errors.New(strings.Join(messages, ", "))
 	}
 	return nil
 }

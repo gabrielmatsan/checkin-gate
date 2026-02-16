@@ -20,11 +20,14 @@ func RespondJSON(w http.ResponseWriter, status int, data any) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	w.Write(body)
+	if _, err := w.Write(body); err != nil {
+		http.Error(w, "failed to write response", http.StatusInternalServerError)
+		return
+	}
 }
 
 func RespondError(w http.ResponseWriter, status int, message string) {
-	RespondJSON(w, status, ErrorResponse{Error: message})
+	RespondJSON(w, status, ErrorResponse{Error: message, Message: ""})
 }
 
 func GetClientIP(r *http.Request) string {

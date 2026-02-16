@@ -55,7 +55,11 @@ func (p *GoogleOAuthProvider) GetUserInfo(ctx context.Context, token *oauth2.Tok
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			return
+		}
+	}()
 
 	var userInfo GoogleUserInfo
 	if err := json.NewDecoder(resp.Body).Decode(&userInfo); err != nil {
