@@ -3,6 +3,7 @@ package worker
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/gabrielmatsan/checkin-gate/internal/events/domain/queue"
@@ -35,15 +36,21 @@ func NewCertificateWorker(
 func (w *CertificateWorker) Start(ctx context.Context) error {
 	w.logger.Info("certificate worker started")
 
+	maxConcurrency := 5
+	sem := make(chan struct{}, maxConcurrency)
+	var wg sync.WaitGroup
+
 	for {
 		select {
 		case <-ctx.Done():
 			w.logger.Info("certificate worker stopping")
+			wg.Wait() // wait for all jobs to be processed
 			return nil
 		default:
-			job, err := w.queue.DequeueWithTimeout(ctx, 5*time.Second)
+			job, err := w.queue.DequeueWithTimeout(ctx, 10*time.Second)
 			if err != nil {
 				if ctx.Err() != nil {
+					wg.Wait()
 					return nil
 				}
 				w.logger.Error("failed to dequeue job", zap.Error(err))
@@ -54,7 +61,16 @@ func (w *CertificateWorker) Start(ctx context.Context) error {
 				continue
 			}
 
-			w.processJob(ctx, job)
+			// goroutiners with channels
+			sem <- struct{}{} // add 1 to the semaphore
+			wg.Add(1)
+			go func() {
+				defer func() {
+					<-sem
+					wg.Done()
+				}()
+				w.processJob(ctx, job)
+			}()
 		}
 	}
 }
