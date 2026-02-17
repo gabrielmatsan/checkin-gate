@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"errors"
 	"regexp"
 	"strconv"
 	"strings"
@@ -71,4 +72,16 @@ func ValidateCPF(cpf string) CPFValidationResult {
 	}
 
 	return CPFValidationResult{Valid: true, CleanedCPF: &cpf}
+}
+
+func MaskCPF(cpf string) (*string, error) {
+	cpf = strings.ReplaceAll(cpf, ".", "")
+	cpf = strings.ReplaceAll(cpf, "-", "")
+
+	if len(cpf) != 11 {
+		return nil, errors.New("cpf must be 11 digits")
+	}
+
+	masked := cpf[:3] + ".***." + "***-" + cpf[9:]
+	return &masked, nil
 }
