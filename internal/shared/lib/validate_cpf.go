@@ -11,6 +11,8 @@ type CPFValidationResult struct {
 	CleanedCPF *string
 }
 
+var regexCPF = regexp.MustCompile(`^(\d)\1{10}$`)
+
 // Pega o cpf, retorna ele limpo e sem pontuação se for valido, se não for valido, retorna
 func ValidateCPF(cpf string) CPFValidationResult {
 	cpf = strings.ReplaceAll(cpf, ".", "")
@@ -25,7 +27,6 @@ func ValidateCPF(cpf string) CPFValidationResult {
 	}
 
 	// Verifica se o CPF é composto por números repetidos
-	var regexCPF = regexp.MustCompile(`^(\d)\1{10}$`)
 	if regexCPF.MatchString(cpf) {
 		return CPFValidationResult{
 			Valid:      false,
