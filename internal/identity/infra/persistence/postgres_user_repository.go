@@ -7,17 +7,23 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gabrielmatsan/checkin-gate/internal/identity/domain/entity"
+	"github.com/gabrielmatsan/checkin-gate/internal/shared"
 	"github.com/jmoiron/sqlx"
 )
 
 var psql = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
 type PostgresUserRepository struct {
-	db *sqlx.DB
+	db shared.DBTX
 }
 
-func NewPostgresUserRepository(db *sqlx.DB) *PostgresUserRepository {
+func NewPostgresUserRepository(db shared.DBTX) *PostgresUserRepository {
 	return &PostgresUserRepository{db: db}
+}
+
+// WithTx retorna uma nova instância do repositório usando a transação fornecida
+func (r *PostgresUserRepository) WithTx(tx *sqlx.Tx) *PostgresUserRepository {
+	return &PostgresUserRepository{db: tx}
 }
 
 func (r *PostgresUserRepository) Save(ctx context.Context, user *entity.User) (*entity.User, error) {

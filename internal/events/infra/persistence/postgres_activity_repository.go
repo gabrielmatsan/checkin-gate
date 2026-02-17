@@ -9,16 +9,22 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gabrielmatsan/checkin-gate/internal/events/domain/entity"
 	"github.com/gabrielmatsan/checkin-gate/internal/events/domain/repository"
+	"github.com/gabrielmatsan/checkin-gate/internal/shared"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 )
 
 type PostgresActivityRepository struct {
-	db *sqlx.DB
+	db shared.DBTX
 }
 
-func NewPostgresActivityRepository(db *sqlx.DB) *PostgresActivityRepository {
+func NewPostgresActivityRepository(db shared.DBTX) *PostgresActivityRepository {
 	return &PostgresActivityRepository{db: db}
+}
+
+// WithTx retorna uma nova instância do repositório usando a transação fornecida
+func (r *PostgresActivityRepository) WithTx(tx *sqlx.Tx) *PostgresActivityRepository {
+	return &PostgresActivityRepository{db: tx}
 }
 
 func (r *PostgresActivityRepository) Save(ctx context.Context, activity *entity.Activity) (*entity.Activity, error) {

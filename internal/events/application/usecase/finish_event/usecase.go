@@ -19,14 +19,16 @@ type Input struct {
 
 type UseCase struct {
 	eventRepo        repository.EventRepository
+	txProvider       repository.TransactionProvider
 	activityRepo     repository.ActivityRepository
 	checkInRepo      repository.CheckInRepository
 	userAuthSvc      service.UserAuthorizationService
 	certificateQueue queue.CertificateQueue
 }
 
-func NewUseCase(eventRepo repository.EventRepository, activityRepo repository.ActivityRepository, checkInRepo repository.CheckInRepository, userAuthSvc service.UserAuthorizationService, certificateQueue queue.CertificateQueue) *UseCase {
+func NewUseCase(txProvider repository.TransactionProvider, eventRepo repository.EventRepository, activityRepo repository.ActivityRepository, checkInRepo repository.CheckInRepository, userAuthSvc service.UserAuthorizationService, certificateQueue queue.CertificateQueue) *UseCase {
 	return &UseCase{
+		txProvider:       txProvider,
 		eventRepo:        eventRepo,
 		activityRepo:     activityRepo,
 		checkInRepo:      checkInRepo,
@@ -182,6 +184,19 @@ func (uc *UseCase) Execute(ctx context.Context, input *Input) error {
 	// enfileirar jobs
 	if err := uc.certificateQueue.EnqueueBatch(ctx, jobs); err != nil {
 		return fmt.Errorf("failed to enqueue certificate jobs: %w", err)
+	}
+
+	// atualizar status do evento para completed
+	completedStatus := entity.EventStatusCompleted
+	err = uc.txProvider.Transact(ctx, func(repos repository.Repositories) error {
+		//nolint:exhaustruct
+		_, err := repos.Events.PartialUpdate(ctx, input.EventID, repository.UpdateEventInput{
+			Status: &completedStatus,
+		})
+		return err
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update event status: %w", err)
 	}
 
 	return nil

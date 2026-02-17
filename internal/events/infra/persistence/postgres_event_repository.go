@@ -9,17 +9,17 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gabrielmatsan/checkin-gate/internal/events/domain/entity"
 	"github.com/gabrielmatsan/checkin-gate/internal/events/domain/repository"
-	"github.com/jmoiron/sqlx"
+	"github.com/gabrielmatsan/checkin-gate/internal/shared"
 	"github.com/lib/pq"
 )
 
 var psql = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
 type PostgresEventRepository struct {
-	db *sqlx.DB
+	db shared.DBTX
 }
 
-func NewPostgresEventRepository(db *sqlx.DB) *PostgresEventRepository {
+func NewPostgresEventRepository(db shared.DBTX) *PostgresEventRepository {
 	return &PostgresEventRepository{db: db}
 }
 
@@ -121,6 +121,44 @@ func (r *PostgresEventRepository) Delete(ctx context.Context, id string) error {
 
 	_, err = r.db.ExecContext(ctx, query, args...)
 	return err
+}
+
+func (r *PostgresEventRepository) PartialUpdate(ctx context.Context, id string, input repository.UpdateEventInput) (*entity.Event, error) {
+	builder := psql.Update("events").Where(sq.Eq{"id": id})
+
+	if input.Name != nil {
+		builder = builder.Set("name", *input.Name)
+	}
+	if input.AllowedDomains != nil {
+		builder = builder.Set("allowed_domains", pq.StringArray(*input.AllowedDomains))
+	}
+	if input.Description != nil {
+		builder = builder.Set("description", *input.Description)
+	}
+	if input.StartDate != nil {
+		builder = builder.Set("start_date", *input.StartDate)
+	}
+	if input.EndDate != nil {
+		builder = builder.Set("end_date", *input.EndDate)
+	}
+	if input.Status != nil {
+		builder = builder.Set("status", *input.Status)
+	}
+
+	builder = builder.Set("updated_at", sq.Expr("NOW()"))
+	builder = builder.Suffix("RETURNING id, name, allowed_domains, description, start_date, end_date, status, created_at, updated_at")
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	var row entity.Event
+	if err := r.db.GetContext(ctx, &row, query, args...); err != nil {
+		return nil, err
+	}
+
+	return &row, nil
 }
 
 func (r *PostgresEventRepository) FindByIDWithActivitiesAndCheckIns(ctx context.Context, eventID string) (*repository.EventWithActivitiesAndCheckIns, error) {

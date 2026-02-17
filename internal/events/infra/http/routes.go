@@ -29,6 +29,8 @@ func RegisterEventsRoutes(r chi.Router, db *sqlx.DB, redisClient *redis.Client, 
 	checkInRepo := persistence.NewPostgresCheckInRepository(db)
 	userRepo := identitypersistence.NewPostgresUserRepository(db)
 
+	eventsTxProvider := persistence.NewPostgresTransactionProvider(db)
+
 	userAuthSvc := eventsvc.NewUserAuthorizationAdapter(userRepo)
 	certificateQueue := infraqueue.NewRedisCertificateQueue(redisClient)
 
@@ -37,7 +39,7 @@ func RegisterEventsRoutes(r chi.Router, db *sqlx.DB, redisClient *redis.Client, 
 	getEventWithActivities := geteventwithactivities.NewUseCase(eventRepo, activityRepo)
 	getEventDetails := geteventdetails.NewUseCase(eventRepo)
 	checkInActivity := checkinactivity.NewUseCase(checkInRepo, activityRepo, eventRepo, userAuthSvc)
-	finishEvent := finishevent.NewUseCase(eventRepo, activityRepo, checkInRepo, userAuthSvc, certificateQueue)
+	finishEvent := finishevent.NewUseCase(eventsTxProvider, eventRepo, activityRepo, checkInRepo, userAuthSvc, certificateQueue)
 
 	// Create individual handlers
 	createEventHandler := handler.NewCreateEventHandler(logger, createEvent)

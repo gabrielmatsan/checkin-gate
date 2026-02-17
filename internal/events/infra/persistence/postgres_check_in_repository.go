@@ -7,15 +7,21 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gabrielmatsan/checkin-gate/internal/events/domain/entity"
+	"github.com/gabrielmatsan/checkin-gate/internal/shared"
 	"github.com/jmoiron/sqlx"
 )
 
 type PostgresCheckInRepository struct {
-	db *sqlx.DB
+	db shared.DBTX
 }
 
-func NewPostgresCheckInRepository(db *sqlx.DB) *PostgresCheckInRepository {
+func NewPostgresCheckInRepository(db shared.DBTX) *PostgresCheckInRepository {
 	return &PostgresCheckInRepository{db: db}
+}
+
+// WithTx retorna uma nova instância do repositório usando a transação fornecida
+func (r *PostgresCheckInRepository) WithTx(tx *sqlx.Tx) *PostgresCheckInRepository {
+	return &PostgresCheckInRepository{db: tx}
 }
 
 func (r *PostgresCheckInRepository) Save(ctx context.Context, checkIn *entity.CheckIn) (*entity.CheckIn, error) {

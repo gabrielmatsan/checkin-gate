@@ -7,15 +7,21 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gabrielmatsan/checkin-gate/internal/identity/domain/entity"
+	"github.com/gabrielmatsan/checkin-gate/internal/shared"
 	"github.com/jmoiron/sqlx"
 )
 
 type PostgresSessionRepository struct {
-	db *sqlx.DB
+	db shared.DBTX
 }
 
-func NewPostgresSessionRepository(db *sqlx.DB) *PostgresSessionRepository {
+func NewPostgresSessionRepository(db shared.DBTX) *PostgresSessionRepository {
 	return &PostgresSessionRepository{db: db}
+}
+
+// WithTx retorna uma nova instância do repositório usando a transação fornecida
+func (r *PostgresSessionRepository) WithTx(tx *sqlx.Tx) *PostgresSessionRepository {
+	return &PostgresSessionRepository{db: tx}
 }
 
 func (r *PostgresSessionRepository) Save(ctx context.Context, session *entity.Session) error {
