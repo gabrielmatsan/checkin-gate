@@ -10,10 +10,7 @@ type BrazilPostalCodeValidationResult struct {
 	CleanedPostalCode *string
 }
 
-var (
-	regexRepeatedDigits = regexp.MustCompile(`^(\d)\1{7}$`)
-	onlyNumbers         = regexp.MustCompile(`^[0-9]+$`)
-)
+var onlyNumbers = regexp.MustCompile(`^[0-9]+$`)
 
 func ValidateBrazilPostalCode(postalCode string) BrazilPostalCodeValidationResult {
 	postalCode = strings.TrimSpace(postalCode)
@@ -36,7 +33,7 @@ func ValidateBrazilPostalCode(postalCode string) BrazilPostalCodeValidationResul
 	}
 
 	// Verifica se o CEP é composto por números repetidos
-	if regexRepeatedDigits.MatchString(postalCode) {
+	if isAllSameDigit(postalCode) {
 		return BrazilPostalCodeValidationResult{
 			Valid:             false,
 			CleanedPostalCode: nil,

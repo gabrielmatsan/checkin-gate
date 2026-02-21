@@ -12,7 +12,20 @@ type CPFValidationResult struct {
 	CleanedCPF *string
 }
 
-var regexCPF = regexp.MustCompile(`^(\d)\1{10}$`)
+var regexCPF = regexp.MustCompile(`^[0-9]{11}$`)
+
+func isAllSameDigit(s string) bool {
+	if len(s) == 0 {
+		return false
+	}
+	first := s[0]
+	for i := 1; i < len(s); i++ {
+		if s[i] != first {
+			return false
+		}
+	}
+	return true
+}
 
 // Pega o cpf, retorna ele limpo e sem pontuação se for valido, se não for valido, retorna
 func ValidateCPF(cpf string) CPFValidationResult {

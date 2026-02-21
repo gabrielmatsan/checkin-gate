@@ -186,7 +186,7 @@ func (uc *UseCase) Execute(ctx context.Context, input *Input) error {
 		return fmt.Errorf("failed to enqueue certificate jobs: %w", err)
 	}
 
-	// atualizar status do evento para completed
+	// atualizar status do evento para completed em transaction
 	completedStatus := entity.EventStatusCompleted
 	err = uc.txProvider.Transact(ctx, func(repos repository.Repositories) error {
 		//nolint:exhaustruct
