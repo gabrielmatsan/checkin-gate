@@ -2,6 +2,7 @@ package entity
 
 import (
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/gabrielmatsan/checkin-gate/internal/shared/lib"
@@ -14,6 +15,9 @@ type Activity struct {
 	Description *string    `db:"description"`
 	StartDate   time.Time  `db:"start_date"`
 	EndDate     time.Time  `db:"end_date"`
+	Latitude    *float64   `db:"latitude"`
+	Longitude   *float64   `db:"longitude"`
+	MaxDistance *float64   `db:"max_distance"`
 	CreatedAt   time.Time  `db:"created_at"`
 	UpdatedAt   *time.Time `db:"updated_at"`
 }
@@ -24,6 +28,9 @@ type NewActivityParams struct {
 	Description *string
 	StartDate   time.Time
 	EndDate     time.Time
+	Latitude    *float64
+	Longitude   *float64
+	MaxDistance *float64
 }
 
 func NewActivity(params NewActivityParams) (*Activity, error) {
@@ -39,6 +46,9 @@ func NewActivity(params NewActivityParams) (*Activity, error) {
 		Description: params.Description,
 		StartDate:   params.StartDate,
 		EndDate:     params.EndDate,
+		Latitude:    params.Latitude,
+		Longitude:   params.Longitude,
+		MaxDistance: params.MaxDistance,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   nil,
 	}, nil
@@ -54,6 +64,9 @@ func (a *Activity) Update(params NewActivityParams) error {
 	a.Description = params.Description
 	a.StartDate = params.StartDate
 	a.EndDate = params.EndDate
+	a.Latitude = params.Latitude
+	a.Longitude = params.Longitude
+	a.MaxDistance = params.MaxDistance
 	a.touch()
 	return nil
 }
@@ -78,4 +91,39 @@ func (a *Activity) HasEnded() bool {
 
 func (a *Activity) IsCheckInAllowed(checkInTime time.Time) bool {
 	return a.HasStarted() && !a.HasEnded()
+}
+
+// HasLocationRestriction retorna true se a atividade tem restrição de localização configurada
+func (a *Activity) HasLocationRestriction() bool {
+	return a.Latitude != nil && a.Longitude != nil && a.MaxDistance != nil
+}
+
+// IsWithinAllowedDistance verifica se as coordenadas fornecidas estão dentro da distância máxima
+// permitida do local da atividade. Usa a fórmula de Haversine para calcular a distância em metros.
+func (a *Activity) IsWithinAllowedDistance(lat, lng float64) bool {
+	if !a.HasLocationRestriction() {
+		return true
+	}
+
+	distance := haversineDistance(*a.Latitude, *a.Longitude, lat, lng)
+	return distance <= *a.MaxDistance
+}
+
+// haversineDistance calcula a distância em metros entre duas coordenadas geográficas
+// usando a fórmula de Haversine
+func haversineDistance(lat1, lng1, lat2, lng2 float64) float64 {
+	const earthRadiusMeters = 6_371_000.0
+
+	lat1Rad := lat1 * math.Pi / 180
+	lat2Rad := lat2 * math.Pi / 180
+	deltaLat := (lat2 - lat1) * math.Pi / 180
+	deltaLng := (lng2 - lng1) * math.Pi / 180
+
+	a := math.Sin(deltaLat/2)*math.Sin(deltaLat/2) +
+		math.Cos(lat1Rad)*math.Cos(lat2Rad)*
+			math.Sin(deltaLng/2)*math.Sin(deltaLng/2)
+
+	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+
+	return earthRadiusMeters * c
 }

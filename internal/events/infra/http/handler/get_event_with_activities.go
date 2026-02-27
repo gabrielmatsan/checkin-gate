@@ -29,6 +29,9 @@ type ActivityResponse struct {
 	Description *string    `json:"description,omitempty"`
 	StartDate   time.Time  `json:"start_date"`
 	EndDate     time.Time  `json:"end_date"`
+	Latitude    *float64   `json:"latitude,omitempty"`
+	Longitude   *float64   `json:"longitude,omitempty"`
+	MaxDistance *float64   `json:"max_distance,omitempty"`
 	CreatedAt   time.Time  `json:"created_at"`
 	UpdatedAt   *time.Time `json:"updated_at,omitempty"`
 }
@@ -98,6 +101,9 @@ func activityToResponse(activity *entity.Activity) ActivityResponse {
 		Description: activity.Description,
 		StartDate:   activity.StartDate,
 		EndDate:     activity.EndDate,
+		Latitude:    activity.Latitude,
+		Longitude:   activity.Longitude,
+		MaxDistance: activity.MaxDistance,
 		CreatedAt:   activity.CreatedAt,
 		UpdatedAt:   activity.UpdatedAt,
 	}

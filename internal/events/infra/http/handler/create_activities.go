@@ -17,6 +17,9 @@ type CreateActivityItem struct {
 	Description *string   `json:"description"`
 	StartDate   time.Time `json:"start_date" validate:"required"`
 	EndDate     time.Time `json:"end_date" validate:"required,gtfield=StartDate"`
+	Latitude    *float64  `json:"latitude" validate:"omitempty,min=-90,max=90"`
+	Longitude   *float64  `json:"longitude" validate:"omitempty,min=-180,max=180"`
+	MaxDistance *float64  `json:"max_distance" validate:"omitempty,gt=0"`
 }
 
 type CreateActivitiesRequest struct {
@@ -31,6 +34,9 @@ type CreateActivityResponse struct {
 	Description *string    `json:"description,omitempty"`
 	StartDate   time.Time  `json:"start_date"`
 	EndDate     time.Time  `json:"end_date"`
+	Latitude    *float64   `json:"latitude,omitempty"`
+	Longitude   *float64   `json:"longitude,omitempty"`
+	MaxDistance *float64   `json:"max_distance,omitempty"`
 	CreatedAt   time.Time  `json:"created_at"`
 	UpdatedAt   *time.Time `json:"updated_at,omitempty"`
 }
@@ -100,6 +106,9 @@ func activityItemsToActivityInputs(items []CreateActivityItem) []createactivitie
 			Description: item.Description,
 			StartDate:   item.StartDate,
 			EndDate:     item.EndDate,
+			Latitude:    item.Latitude,
+			Longitude:   item.Longitude,
+			MaxDistance: item.MaxDistance,
 		}
 	}
 	return inputs
@@ -123,6 +132,9 @@ func activitiesToCreateActivitiesResponse(activities []*entity.Activity) []Creat
 			Description: activity.Description,
 			StartDate:   activity.StartDate,
 			EndDate:     activity.EndDate,
+			Latitude:    activity.Latitude,
+			Longitude:   activity.Longitude,
+			MaxDistance: activity.MaxDistance,
 			CreatedAt:   activity.CreatedAt,
 			UpdatedAt:   activity.UpdatedAt,
 		}
