@@ -15,6 +15,9 @@ type ActivityInput struct {
 	Description *string
 	StartDate   time.Time
 	EndDate     time.Time
+	Latitude    *float64
+	Longitude   *float64
+	MaxDistance *float64
 }
 
 type Input struct {
@@ -90,6 +93,9 @@ func (uc *UseCase) Execute(ctx context.Context, input *Input) (*Output, error) {
 			Description: a.Description,
 			StartDate:   a.StartDate,
 			EndDate:     a.EndDate,
+			Latitude:    a.Latitude,
+			Longitude:   a.Longitude,
+			MaxDistance: a.MaxDistance,
 		})
 		if err != nil {
 			return nil, err

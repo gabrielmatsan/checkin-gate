@@ -14,6 +14,13 @@ import (
 	"github.com/lib/pq"
 )
 
+var activityColumns = []string{
+	"id", "name", "event_id", "description",
+	"start_date", "end_date",
+	"latitude", "longitude", "max_distance",
+	"created_at", "updated_at",
+}
+
 type PostgresActivityRepository struct {
 	db shared.DBTX
 }
@@ -30,9 +37,9 @@ func (r *PostgresActivityRepository) WithTx(tx *sqlx.Tx) *PostgresActivityReposi
 func (r *PostgresActivityRepository) Save(ctx context.Context, activity *entity.Activity) (*entity.Activity, error) {
 	query, args, err := psql.
 		Insert("activities").
-		Columns("id", "name", "event_id", "description", "start_date", "end_date").
-		Values(activity.ID, activity.Name, activity.EventID, activity.Description, activity.StartDate, activity.EndDate).
-		Suffix("RETURNING id, name, event_id, description, start_date, end_date, created_at, updated_at").
+		Columns("id", "name", "event_id", "description", "start_date", "end_date", "latitude", "longitude", "max_distance").
+		Values(activity.ID, activity.Name, activity.EventID, activity.Description, activity.StartDate, activity.EndDate, activity.Latitude, activity.Longitude, activity.MaxDistance).
+		Suffix("RETURNING " + joinColumns(activityColumns)).
 		ToSql()
 	if err != nil {
 		return nil, err
@@ -53,14 +60,14 @@ func (r *PostgresActivityRepository) SaveAll(ctx context.Context, activities []*
 
 	builder := psql.
 		Insert("activities").
-		Columns("id", "name", "event_id", "description", "start_date", "end_date")
+		Columns("id", "name", "event_id", "description", "start_date", "end_date", "latitude", "longitude", "max_distance")
 
 	for _, a := range activities {
-		builder = builder.Values(a.ID, a.Name, a.EventID, a.Description, a.StartDate, a.EndDate)
+		builder = builder.Values(a.ID, a.Name, a.EventID, a.Description, a.StartDate, a.EndDate, a.Latitude, a.Longitude, a.MaxDistance)
 	}
 
 	query, args, err := builder.
-		Suffix("RETURNING id, name, event_id, description, start_date, end_date, created_at, updated_at").
+		Suffix("RETURNING " + joinColumns(activityColumns)).
 		ToSql()
 	if err != nil {
 		return nil, err
@@ -81,7 +88,7 @@ func (r *PostgresActivityRepository) SaveAll(ctx context.Context, activities []*
 
 func (r *PostgresActivityRepository) FindByEventIDAndNames(ctx context.Context, eventID string, names []string) ([]*entity.Activity, error) {
 	query, args, err := psql.
-		Select("id", "name", "event_id", "description", "start_date", "end_date", "created_at", "updated_at").
+		Select(activityColumns...).
 		From("activities").
 		Where(sq.Eq{"event_id": eventID, "name": names}).
 		ToSql()
@@ -104,7 +111,7 @@ func (r *PostgresActivityRepository) FindByEventIDAndNames(ctx context.Context, 
 
 func (r *PostgresActivityRepository) FindByID(ctx context.Context, id string) (*entity.Activity, error) {
 	query, args, err := psql.
-		Select("id", "name", "event_id", "description", "start_date", "end_date", "created_at", "updated_at").
+		Select(activityColumns...).
 		From("activities").
 		Where(sq.Eq{"id": id}).
 		ToSql()
@@ -125,7 +132,7 @@ func (r *PostgresActivityRepository) FindByID(ctx context.Context, id string) (*
 
 func (r *PostgresActivityRepository) FindByEventID(ctx context.Context, eventID string) ([]*entity.Activity, error) {
 	query, args, err := psql.
-		Select("id", "name", "event_id", "description", "start_date", "end_date", "created_at", "updated_at").
+		Select(activityColumns...).
 		From("activities").
 		Where(sq.Eq{"event_id": eventID}).
 		OrderBy("start_date ASC").
@@ -149,7 +156,7 @@ func (r *PostgresActivityRepository) FindByEventID(ctx context.Context, eventID 
 
 func (r *PostgresActivityRepository) FindAll(ctx context.Context) ([]*entity.Activity, error) {
 	query, args, err := psql.
-		Select("id", "name", "event_id", "description", "start_date", "end_date", "created_at", "updated_at").
+		Select(activityColumns...).
 		From("activities").
 		OrderBy("start_date ASC").
 		ToSql()
@@ -177,9 +184,12 @@ func (r *PostgresActivityRepository) Update(ctx context.Context, activity *entit
 		Set("description", activity.Description).
 		Set("start_date", activity.StartDate).
 		Set("end_date", activity.EndDate).
+		Set("latitude", activity.Latitude).
+		Set("longitude", activity.Longitude).
+		Set("max_distance", activity.MaxDistance).
 		Set("updated_at", sq.Expr("NOW()")).
 		Where(sq.Eq{"id": activity.ID}).
-		Suffix("RETURNING id, name, event_id, description, start_date, end_date, created_at, updated_at").
+		Suffix("RETURNING " + joinColumns(activityColumns)).
 		ToSql()
 	if err != nil {
 		return nil, err
@@ -216,6 +226,9 @@ func (r *PostgresActivityRepository) FindByActivityIDWithEvent(ctx context.Conte
 		Description *string    `db:"description"`
 		StartDate   time.Time  `db:"start_date"`
 		EndDate     time.Time  `db:"end_date"`
+		Latitude    *float64   `db:"latitude"`
+		Longitude   *float64   `db:"longitude"`
+		MaxDistance *float64   `db:"max_distance"`
 		CreatedAt   time.Time  `db:"created_at"`
 		UpdatedAt   *time.Time `db:"updated_at"`
 		// Event fields
@@ -237,6 +250,9 @@ func (r *PostgresActivityRepository) FindByActivityIDWithEvent(ctx context.Conte
 			"a.description",
 			"a.start_date",
 			"a.end_date",
+			"a.latitude",
+			"a.longitude",
+			"a.max_distance",
 			"a.created_at",
 			"a.updated_at",
 			"e.name AS event_name",
@@ -268,6 +284,9 @@ func (r *PostgresActivityRepository) FindByActivityIDWithEvent(ctx context.Conte
 			Description: row.Description,
 			StartDate:   row.StartDate,
 			EndDate:     row.EndDate,
+			Latitude:    row.Latitude,
+			Longitude:   row.Longitude,
+			MaxDistance: row.MaxDistance,
 			CreatedAt:   row.CreatedAt,
 			UpdatedAt:   row.UpdatedAt,
 		},
@@ -283,4 +302,15 @@ func (r *PostgresActivityRepository) FindByActivityIDWithEvent(ctx context.Conte
 			UpdatedAt:      row.EventUpdatedAt,
 		},
 	}, nil
+}
+
+func joinColumns(cols []string) string {
+	result := ""
+	for i, c := range cols {
+		if i > 0 {
+			result += ", "
+		}
+		result += c
+	}
+	return result
 }

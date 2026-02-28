@@ -13,6 +13,8 @@ import (
 type Input struct {
 	UserID     string
 	ActivityID string
+	Latitude   *float64
+	Longitude  *float64
 }
 
 type Output struct {
@@ -84,6 +86,16 @@ func (uc *UseCase) Execute(ctx context.Context, input *Input) (*Output, error) {
 	// if !activity.IsCheckInAllowed(time.Now()) {
 	// 	return nil, fmt.Errorf("check-in not allowed outside activity time")
 	// }
+
+	// 4.1. Verificar se o check-in está dentro da área permitida
+	if activity.HasLocationRestriction() {
+		if input.Latitude == nil || input.Longitude == nil {
+			return nil, fmt.Errorf("location is required for this activity")
+		}
+		if !activity.IsWithinAllowedDistance(*input.Latitude, *input.Longitude) {
+			return nil, fmt.Errorf("check-in not allowed outside activity area")
+		}
+	}
 
 	// 5. Busca evento e email do usuário em paralelo
 	var event *entity.Event
