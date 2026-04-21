@@ -37,17 +37,16 @@ func NewUseCase(eventRepo repository.EventRepository, userAuthSvc service.UserAu
 
 func (uc *UseCase) Execute(ctx context.Context, input *Input) (*Output, error) {
 	user, err := uc.userAuthSvc.GetUserByID(ctx, input.UserID)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user by ID: %w", err)
 	}
 
 	if user == nil {
-		return nil, fmt.Errorf("user not found")
+		return nil, service.ErrUserNotFound
 	}
 
 	if !user.IsAdmin {
-		return nil, fmt.Errorf("user is not an admin")
+		return nil, service.ErrUserNotAdmin
 	}
 
 	event, err := entity.NewEvent(entity.NewEventParams{
@@ -61,17 +60,9 @@ func (uc *UseCase) Execute(ctx context.Context, input *Input) (*Output, error) {
 		return nil, err
 	}
 
-	if !event.IsStartDateBeforeEndDate() {
-		return nil, fmt.Errorf("start date must be before end date")
-	}
-
-	if !event.IsEndDateAfterStartDate() {
-		return nil, fmt.Errorf("end date must be after start date")
-	}
-
 	newEvent, err := uc.eventRepo.Save(ctx, event)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to save event: %w", err)
 	}
 
 	return &Output{

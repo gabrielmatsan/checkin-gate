@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -8,6 +9,8 @@ import (
 	"github.com/gabrielmatsan/checkin-gate/internal/shared/lib"
 	"github.com/lib/pq"
 )
+
+var ErrStartDateBeforeEndDate = errors.New("start date must be before end date")
 
 // Enum status do evento
 type EventStatus string
@@ -40,6 +43,10 @@ type NewEventParams struct {
 }
 
 func NewEvent(params NewEventParams) (*Event, error) {
+	if !params.StartDate.Before(params.EndDate) {
+		return nil, ErrStartDateBeforeEndDate
+	}
+
 	id, err := lib.GenerateID(lib.UUID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate event ID: %w", err)
@@ -87,16 +94,6 @@ func (e *Event) IsAllowedDomain(email string) bool {
 // verifica se o check-in está dentro do horário de evento
 func (e *Event) IsCheckInWithinEventTime(checkInTime time.Time) bool {
 	return checkInTime.After(e.StartDate) && checkInTime.Before(e.EndDate)
-}
-
-// verifica se a data de inicio é antes da data de fim
-func (e *Event) IsStartDateBeforeEndDate() bool {
-	return e.StartDate.Before(e.EndDate)
-}
-
-// verifica se a data de fim é depois da data de inicio
-func (e *Event) IsEndDateAfterStartDate() bool {
-	return e.EndDate.After(e.StartDate)
 }
 
 func extractDomain(email string) string {

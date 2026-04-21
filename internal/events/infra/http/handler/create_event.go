@@ -2,11 +2,13 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
 	createevent "github.com/gabrielmatsan/checkin-gate/internal/events/application/usecase/create_event"
 	"github.com/gabrielmatsan/checkin-gate/internal/events/domain/entity"
+	"github.com/gabrielmatsan/checkin-gate/internal/events/domain/service"
 	"github.com/gabrielmatsan/checkin-gate/internal/shared/lib"
 	"github.com/gabrielmatsan/checkin-gate/internal/shared/middleware"
 	"go.uber.org/zap"
@@ -83,11 +85,17 @@ func (h *CreateEventHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	input := createEventRequestToInput(&req, userID)
 	output, err := h.useCase.Execute(r.Context(), input)
 	if err != nil {
-		if err.Error() == "user is not an admin" {
+		switch {
+		case errors.Is(err, service.ErrUserNotFound):
+			lib.RespondError(w, http.StatusNotFound, err.Error())
+		case errors.Is(err, service.ErrUserNotAdmin):
 			lib.RespondError(w, http.StatusForbidden, err.Error())
-			return
+		case errors.Is(err, entity.ErrStartDateBeforeEndDate):
+			lib.RespondError(w, http.StatusBadRequest, err.Error())
+		default:
+			h.logger.Error("failed to create event", zap.Error(err))
+			lib.RespondError(w, http.StatusInternalServerError, "internal server error")
 		}
-		lib.RespondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
